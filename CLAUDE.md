@@ -57,9 +57,9 @@ TELEGRAM_BOT_TOKEN=        # also needed by the n8n container (docker/.env)
 TELEGRAM_CHAT_ID=          # also needed by the n8n container (docker/.env)
 NOTION_API_KEY=
 NOTION_DATABASE_ID=
-N8N_WEBHOOK_URL=
-N8N_BASE_URL=
-N8N_API_KEY=
+N8N_WEBHOOK_URL=          # retired (n8n gone) — no longer read by the dashboard
+N8N_BASE_URL=             # retired
+N8N_API_KEY=              # retired
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 (ANTHROPIC_API_KEY is no longer used — all AI runs on Gemini.)
@@ -78,11 +78,13 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
   classification, interview question generation
 - Scraping is FREE (ATS + Apify); only matching/resume-gen cost Gemini quota.
   The matcher is the bottleneck, so daily-scrape is backlog-aware.
-- All PDFs generated with pdf-lib, uploaded to Supabase Storage
-- Daily cron runs at 08:00 IST (02:30 UTC) — shortly after the Gemini quota
-  resets (midnight US Pacific), so each run starts with a near-full budget.
-- Daily order: MATCH backlog first (oldest jobs first), THEN top-up scrape.
-- Max 15 auto-applies per day to avoid spam flagging
+- All PDFs rendered by the dashboard with puppeteer (headless Chromium, see
+  `dashboard/lib/render-pdf.ts`), uploaded to Supabase Storage
+- Pipeline cron runs Mon/Wed/Fri at 08:00 IST (02:30 UTC) — shortly after the
+  Gemini quota resets (midnight US Pacific), so each run starts with a near-full budget.
+- Run order: MATCH backlog first (oldest jobs first), THEN top-up scrape.
+- Auto-apply (agents/auto-apply/) is NOT running — applying is manual from the
+  dashboard. If it is ever revived: max 15 auto-applies per day to avoid spam flagging.
 - Always deduplicate by jd_url; matcher only touches status='scraped' so no job
   is scraped or scored twice.
 - Resume generation: always present exactly 2 years of experience regardless of
@@ -109,9 +111,9 @@ status NOT NULL — all applied to prod). The applications API references the
    FIRST (score the unscored backlog oldest-first) then `agents/scraper/
    daily-scrape` (top-up to backlog target 60). Matcher = **Quality Gate**
    (`agents/scraper/quality-gate.ts`: drop senior/>5y/thin/off-target to
-   `filtered`) → Gemini **6-dimension rubric** (stack/seniority/location/comp/
-   evidence/mission, 0–100 each) → `match_score` = weighted average
-   (.30/.20/.20/.15/.10/.05) → ≥60 `matched`, <60 `filtered`. Stored in JSONB
+   `filtered`) → Gemini **6-dimension rubric** (0–100 each) → `match_score` = weighted
+   average: stack_fit .30, evidence .20, seniority .20, mission .15,
+   location .10, compensation .05 (`WEIGHTS` in agents/matcher/index.ts) → ≥60 `matched`, <60 `filtered`. Stored in JSONB
    `score_breakdown` column + the `filtered` enum value.
 2. Dashboard is **login-gated** (`/login`, cookie auth; creds in dashboard/.env.local:
    DASHBOARD_EMAIL/PASSWORD + AUTH_TOKEN).

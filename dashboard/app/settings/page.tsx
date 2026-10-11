@@ -42,7 +42,7 @@ export default function SettingsPage() {
 
       <div className="flex items-start gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-xs text-primary">
         <Info className="mt-0.5 h-4 w-4 shrink-0" />
-        <p>These are local display preferences. The live agent config (scrape cadence, real caps) lives in the n8n workflows and <code className="rounded bg-primary/10 px-1">.env.local</code>.</p>
+        <p>These are local display preferences. The live agent config (scrape cadence, real caps) lives in the GitHub Actions workflows and <code className="rounded bg-primary/10 px-1">.env.local</code>.</p>
       </div>
 
       <div className="card space-y-6 p-6">
