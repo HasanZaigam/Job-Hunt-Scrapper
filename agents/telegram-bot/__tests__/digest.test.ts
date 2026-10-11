@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { esc, formatMatchedLine, formatFilteredLine, chunkLines } from '../digest';
+import { esc, formatMatchedLine, formatFilteredLine, chunkLines, isContractLike } from '../digest';
 
 type Test = () => void;
 const tests: Record<string, Test> = {};
@@ -27,6 +27,16 @@ tests['chunkLines never exceeds the limit and never loses a line'] = () => {
   assert.ok(chunks.length > 1);
   for (const c of chunks) assert.ok(c.length <= 500, `chunk too long: ${c.length}`);
   assert.strictEqual(chunks.join('\n').split('\n').length, 200);
+};
+
+tests['contract / per-task / hourly postings are flagged, full-time ones are not'] = () => {
+  for (const r of ['Machine Learning Engineer | Remote - Contract', 'LLM Systems Engineer - Fully Remote | Upto $500/task Task based', 'AI/ML Engineer - Upto $85/hr', 'Freelance AI Developer']) {
+    assert.strictEqual(isContractLike(r), true, r);
+  }
+  for (const r of ['AI Engineer', 'Machine Learning Engineer', 'Applied AI Engineer - Contracts Platform Team'.replace('Contracts', 'Billing')]) {
+    assert.strictEqual(isContractLike(r), false, r);
+  }
+  assert.ok(formatMatchedLine({ company: 'X', role: 'ML Engineer - Contract', match_score: 80 }, 1).includes('🧾 contract/task-based'));
 };
 
 export function run() {

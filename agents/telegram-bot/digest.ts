@@ -41,9 +41,18 @@ function attr(s: string): string {
   return esc(s).replace(/"/g, '&quot;');
 }
 
+/** Contract / freelance / per-task postings are flagged, not hidden — they are rarely a full-time offer. */
+export function isContractLike(role: string): boolean {
+  return /\b(contract|contractor|freelance|task[- ]?based|per task|per hour)\b|\/\s?(hr|hour|task)\b/i.test(role || '');
+}
+
 export function formatMatchedLine(j: JobRow, rank: number): string {
   const score = j.match_score != null ? `${j.match_score}` : '–';
-  const where = [j.location ? `📍 ${esc(j.location)}` : '', j.jd_url ? `<a href="${attr(j.jd_url)}">Open job</a>` : '']
+  const where = [
+    j.location ? `📍 ${esc(j.location)}` : '',
+    isContractLike(j.role) ? '🧾 contract/task-based' : '',
+    j.jd_url ? `<a href="${attr(j.jd_url)}">Open job</a>` : '',
+  ]
     .filter(Boolean).join(' · ');
   return `${rank}. <b>${score}</b> ${esc(j.company)} — ${esc(j.role)}${where ? `\n    ${where}` : ''}`;
 }

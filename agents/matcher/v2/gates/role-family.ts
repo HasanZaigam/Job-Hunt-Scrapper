@@ -20,7 +20,7 @@ import type { RoleFamily, RoleFamilyConfidence, RoleFamilyGateResult, RoleFamily
 
 const FAMILY_KEYWORDS: Record<Exclude<RoleFamily, 'unknown'>, string[]> = {
   ai_ml_engineer: ['ai engineer', 'ml engineer', 'machine learning engineer', 'ai/ml', 'ai platform engineer', 'ai software engineer'],
-  genai_applied: ['genai', 'generative ai', 'llm', 'rag', 'prompt engineering', 'llm engineer'],
+  genai_applied: ['genai', 'generative ai', 'llm', 'rag', 'prompt engineering', 'llm engineer', 'agentic', 'ai agent', 'agent engineer', 'ai automation'],
   backend_engineer: ['backend engineer', 'backend developer', 'api engineer', 'platform engineer'],
   data_scientist: ['data scientist', 'data science', 'research scientist', 'applied scientist', 'ai safety research'],
   devops_infra: ['devops', 'sre', 'site reliability', 'infrastructure engineer', 'cloud engineer'],
@@ -86,6 +86,13 @@ const NON_ENGINEERING_SIGNALS = [
   'google sheets', 'program management', 'stakeholder management',
   'go-to-market', 'gtm strategy', 'sales enablement', 'business technology',
 ];
+
+// A TITLE that names a sales / account / marketing / recruiting role is the
+// strongest possible signal of what the job is — AI vocabulary in the body (a
+// "Sales Engineer" selling an AI product mentions LLMs, RAG, ...) must not turn it
+// into an engineering role. Deliberately excludes "solutions engineer", which is
+// one of the candidate's target titles.
+const NON_ENGINEERING_TITLE = /\b(sales (engineer|development|representative|manager|executive|associate)|account (executive|manager|director)|business development|customer success|marketing (manager|specialist|lead)|recruiter|talent acquisition)\b/i;
 
 // Word-boundary matching, not plain substring containment — a short signal
 // like "ios" must not match inside "previous", "various", "curious", etc.
@@ -179,6 +186,18 @@ export function evaluateRoleFamilyGate(role: string, jdText: string, profile: Ro
     engineering_signals: eng.matched,
     non_engineering_signals: nonEng.matched,
   };
+
+  const titleNonEng = NON_ENGINEERING_TITLE.exec(role || '');
+  if (titleNonEng) {
+    return {
+      family: 'non_engineering',
+      confidence: 'high',
+      passed: profile.acceptable_role_families.includes('non_engineering'),
+      needs_review: false,
+      reason: `title names a non-engineering role ("${titleNonEng[0]}") — body AI vocabulary does not make it an engineering job`,
+      evidence,
+    };
+  }
 
   if (top.count === 0) {
     return {
