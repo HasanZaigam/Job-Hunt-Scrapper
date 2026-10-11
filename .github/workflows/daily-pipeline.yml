@@ -75,15 +75,22 @@ jobs:
           if printf %s "$url" | grep -q '[[:space:]]'; then echo "::error::SUPABASE_URL contains a space/newline — re-paste it without trailing whitespace"; exit 1; fi
           if printf %s "$key" | grep -q '[[:space:]]'; then echo "::error::SUPABASE_SERVICE_KEY contains a space/newline — re-paste it without trailing whitespace"; exit 1; fi
           if [ "$(printf %s "$key" | tr -cd '.' | wc -c)" != "2" ]; then echo "::error::SUPABASE_SERVICE_KEY does not look like a JWT (expected 3 dot-separated parts, starting eyJ...)"; exit 1; fi
-          code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 \
-            "$url/rest/v1/applications?select=id&limit=1" \
-            -H "apikey: $key" -H "Authorization: Bearer $key") || {
-              echo "::error::Cannot connect to Supabase (DNS/connection failed). The project may be PAUSED (restore it in the Supabase dashboard) or SUPABASE_URL points to the wrong project."; exit 1; }
-          echo "Supabase REST responded HTTP $code"
+          # A just-restored (or waking) project answers 5xx (e.g. 521) for a few
+          # minutes — retry for ~4 min before giving up.
+          code=""
+          for attempt in 1 2 3 4 5 6 7 8; do
+            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 \
+              "$url/rest/v1/applications?select=id&limit=1" \
+              -H "apikey: $key" -H "Authorization: Bearer $key") || {
+                echo "::error::Cannot connect to Supabase (DNS/connection failed). The project may be PAUSED (restore it in the Supabase dashboard) or SUPABASE_URL points to the wrong project."; exit 1; }
+            echo "attempt $attempt: Supabase REST responded HTTP $code"
+            case "$code" in 5*) sleep 30 ;; *) break ;; esac
+          done
           case "$code" in
             200|206) echo "Supabase OK." ;;
             401|403) echo "::error::Supabase rejected SUPABASE_SERVICE_KEY (HTTP $code). Use the service_role key, not the anon key, and make sure it belongs to this project."; exit 1 ;;
             404) echo "::error::The 'applications' table was not found — run database/schema.sql (then migrations 001-004) in the Supabase SQL editor."; exit 1 ;;
+            5*) echo "::error::Supabase still returning HTTP $code after ~4 minutes — the project may still be restoring; check its status in the Supabase dashboard and re-run."; exit 1 ;;
             *) echo "::error::Unexpected Supabase response HTTP $code"; exit 1 ;;
           esac
 
