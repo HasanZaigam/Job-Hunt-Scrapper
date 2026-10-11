@@ -23,7 +23,16 @@ name: Daily job pipeline
 on:
   schedule:
     - cron: '30 2 * * 1,3,5' # 08:00 IST Mon/Wed/Fri
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      skip_apify:
+        description: 'Skip the slow Apify discovery (quick test: curated list only)'
+        type: boolean
+        default: false
+      telegram_filtered:
+        description: 'Also list recently filtered-out jobs in the Telegram message'
+        type: boolean
+        default: false
 
 # Never let two runs overlap (they'd both scrape/score the same backlog).
 concurrency:
@@ -39,6 +48,10 @@ jobs:
       APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      SKIP_APIFY: ${{ inputs.skip_apify }}
+      TELEGRAM_INCLUDE_FILTERED: ${{ inputs.telegram_filtered }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -104,3 +117,21 @@ jobs:
       #    the backlog toward the target for the next run.
       - name: Scrape new jobs (curated list + Apify discovery)
         run: npx ts-node agents/scraper/daily-scrape.ts
+
+      # 3) Telegram: run summary + new matched jobs. Never fails the pipeline —
+      #    a Telegram problem prints a specific hint in this step's log instead.
+      - name: Telegram digest
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: npx ts-node agents/telegram-bot/digest.ts
+
+      # 4) Telegram alert if any earlier step failed (e.g. Supabase unreachable).
+      - name: Telegram failure alert
+        if: ${{ failure() }}
+        continue-on-error: true
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then echo "Telegram secrets not set — no alert sent."; exit 0; fi
+          curl -sS -o /dev/null -w 'Telegram alert HTTP %{http_code}\n' \
+            -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=⚠️ Job Hunt pipeline FAILED. Details: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"

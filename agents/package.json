@@ -7,6 +7,7 @@
     "match": "ts-node matcher/index.ts",
     "email": "ts-node email-monitor/index.ts",
     "test:scraper": "ts-node scraper/__tests__/filters.test.ts",
+    "telegram-digest": "ts-node telegram-bot/digest.ts",
     "telegram-test": "ts-node telegram-bot/index.ts --test",
     "gmail-auth": "ts-node email-monitor/gmail-auth.ts"
   },
