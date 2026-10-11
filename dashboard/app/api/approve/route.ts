@@ -7,8 +7,8 @@ import { renderCoverLetterHTML } from '../../../lib/cover-letter-template';
 import { renderPdfs } from '../../../lib/render-pdf';
 import { uploadPdf } from '../../../lib/storage';
 
-// Needs the Node runtime + a real browser (Chromium via CHROME_PATH). Runs on a
-// container host (Render), not Vercel serverless.
+// Needs the Node runtime + a real browser (puppeteer's bundled Chromium). Runs on
+// a container host (Render), not Vercel serverless.
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -73,22 +73,6 @@ export async function POST(req: NextRequest) {
 
     if (updateErr) {
       return NextResponse.json({ error: `DB update failed: ${updateErr.message}` }, { status: 500 });
-    }
-
-    // 6) Fire n8n webhook (Notion / Telegram) — do not block the response.
-    const webhookUrl = process.env.N8N_WEBHOOK_URL;
-    if (webhookUrl) {
-      fetch(webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: app.id,
-          company: app.company,
-          role: app.role,
-          resume_url: resumeUrl,
-          cover_letter_url: coverUrl,
-        }),
-      }).catch(err => console.error('[approve] n8n webhook failed:', err));
     }
 
     return NextResponse.json({
