@@ -1,6 +1,6 @@
 import assert from 'assert';
 import { isEligibleLocation, matchesAiKeywords, matchesKeywords } from '../filters';
-import { gateReason } from '../quality-gate';
+import { gateReason, maxYears } from '../quality-gate';
 import { ashbyLocation } from '../ashby';
 
 type Test = () => void;
@@ -69,6 +69,25 @@ tests['gate no longer passes a job with an empty title and no AI content'] = () 
 tests['gate rejects look-alike titles whose body has no AI content'] = () => {
   const plain = 'We sell insurance and manage claims for retail customers across the region. '.repeat(8);
   assert.ok(gateReason('Email Marketing Associate', plain)?.startsWith('non-target'));
+};
+
+// ---- years-of-experience rule (company text must not count)
+tests['maxYears ignores company marketing numbers'] = () => {
+  assert.strictEqual(maxYears('We were founded 10 years ago and have grown 20 years in business. Apply today.'), 0);
+  assert.strictEqual(maxYears('Our platform has served customers for 8 years.'), 0);
+};
+tests['maxYears counts real experience requirements'] = () => {
+  assert.strictEqual(maxYears('Requirements: 6+ years of experience with Python.'), 6.5);
+  assert.strictEqual(maxYears('3-5 years of professional experience in ML.'), 5);
+  assert.strictEqual(maxYears('Minimum 2 yrs hands-on experience required\n- 7 years experience leading teams'), 7);
+};
+tests['SWE with a marketing "years" figure is no longer gated as >5y'] = () => {
+  const jd = 'Interview Kickstart has trained engineers for 12 years. We are hiring an engineer with 1-2 years of experience building ML systems in Python and LLM applications. ' + 'Great culture. '.repeat(20);
+  assert.strictEqual(gateReason('Software Engineer 1, Applied AI', jd), null);
+};
+tests['a real >5y requirement is still gated'] = () => {
+  const jd = 'You have 8+ years of experience in machine learning. ' + 'We build AI products. '.repeat(20);
+  assert.strictEqual(gateReason('ML Engineer', jd), 'requires >5y experience');
 };
 
 export function run() {

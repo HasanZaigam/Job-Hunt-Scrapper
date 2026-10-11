@@ -56,6 +56,9 @@ export const CORE_AI_KEYWORDS = [
   'Computer Vision', 'Data Scientist', 'MLOps', 'AI Engineer',
   'Research Scientist', 'Deep Learning', 'Generative', 'Foundation Model',
   'Data Science',
+  // Candidate's target titles that carry no "AI"/"ML" token on their own:
+  'Agentic', 'Applied AI', 'AI Automation', 'Intelligent Automation', 'Prompt Engineer',
+  'RAG', 'Conversational AI', 'Voice AI',
 ];
 
 const regexCache = new Map<string, RegExp>();

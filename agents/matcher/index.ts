@@ -5,17 +5,23 @@ import { buildMatchingPrompt } from './prompts';
 import { generateWithRetry } from '../lib/gemini';
 import { gateReason } from '../scraper/quality-gate';
 import { evaluateHardVeto } from './v2/hard-veto';
+import type { HardVetoResult } from './v2/types';
 import { buildDecisionLog } from './v2/decision-log';
 import { buildV2PersistencePayload, persistV2Result } from './v2/persistence';
 import baseResume from '../resume-generator/base-resume.json';
 
-// Milestone 1 of the v2 rollout plan: experience + location hard-veto gates,
-// built behind this flag, running in shadow mode only. When enabled, v2's
-// gate decision is computed and logged alongside v1's for every job, but
-// v1 (gateReason) remains the sole source of truth for `status` — no live
-// traffic is affected. Set MATCHER_ENGINE_V2_ENABLED=true to turn on shadow
-// logging; unset/false is a full no-op (zero behavior change, zero risk).
-const V2_SHADOW_ENABLED = process.env.MATCHER_ENGINE_V2_ENABLED === 'true';
+// v2 matcher modes (MATCHER_ENGINE_V2_MODE):
+//   off    — v1 only (default)
+//   shadow — v2 gates are computed and logged/persisted, but v1 alone decides `status`
+//   live   — v2 hard-veto gates (role family, experience, location) DECIDE: a vetoed
+//            job is set to `filtered` before any Gemini call (saves quota); jobs that
+//            pass are still scored by the v1 Gemini rubric.
+// MATCHER_ENGINE_V2_ENABLED=true is kept as an alias for "shadow".
+function resolveV2Mode(): 'off' | 'shadow' | 'live' {
+  const m = (process.env.MATCHER_ENGINE_V2_MODE || '').trim().toLowerCase();
+  if (m === 'live' || m === 'shadow' || m === 'off') return m;
+  return process.env.MATCHER_ENGINE_V2_ENABLED === 'true' ? 'shadow' : 'off';
+}
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
 
@@ -72,6 +78,7 @@ async function matchJob(jdText: string): Promise<MatchResult | null> {
 }
 
 async function main() {
+  const V2_MODE = resolveV2Mode(); // read now, after dotenv has loaded
   console.log('[matcher] Fetching unmatched jobs…');
 
   // Oldest first: yesterday's unscored backlog is prioritised over today's
@@ -90,7 +97,10 @@ async function main() {
 
   console.log(`[matcher] Processing ${jobs.length} jobs (oldest first) with Gemini…`);
 
+  console.log(`[matcher] v2 engine mode: ${V2_MODE}`);
   let consecutiveFailures = 0;
+  let persistV2 = V2_MODE !== 'off'; // turned off for the run if migration 004 is missing
+  const stats = { gatedV1: 0, vetoedV2: 0, scored: 0 };
 
   for (const job of jobs) {
     if (!job.jd_text) {
@@ -101,23 +111,24 @@ async function main() {
     // Deterministic quality gate — drop senior/thin/spam before Gemini.
     const reason = gateReason(job.role, job.jd_text);
 
-    // Shadow-only v2 hard veto (experience + location). Never affects status.
-    // Logged as one structured JSON line per job (not prose) so every
-    // decision — v1's, v2's, and the gate-by-gate reasoning behind v2's —
-    // is machine-parseable and explainable after the fact.
-    if (V2_SHADOW_ENABLED) {
-      const v2 = evaluateHardVeto(job.role, job.jd_text, job.location || '');
-      const log = buildDecisionLog(job, reason, v2);
-      console.log(`[matcher/v2-shadow] ${JSON.stringify(log)}`);
+    // v2 hard veto (role family + experience + location). Logged as one structured
+    // JSON line per job so every decision is machine-parseable and explainable.
+    let v2: HardVetoResult | null = null;
+    if (V2_MODE !== 'off') {
+      v2 = evaluateHardVeto(job.role, job.jd_text, job.location || '');
+      console.log(`[matcher/v2-${V2_MODE}] ${JSON.stringify(buildDecisionLog(job, reason, v2))}`);
 
-      // Persistence foundation only — this path runs gates only (zero
-      // Gemini calls, same as before), so `opportunity` is always null here
-      // and opportunity_score/priority_bucket persist as null. Never
-      // touches `status` or any other V1 column. See agents/matcher/v2/persistence.ts.
-      const payload = buildV2PersistencePayload(v2, null, new Date());
-      const persistResult = await persistV2Result(supabase, job.id, payload);
-      if (!persistResult.ok) {
-        console.error(`[matcher/v2-shadow] persistence failed for ${job.id}: ${persistResult.error}`);
+      if (persistV2) {
+        // Writes only the additive v2 columns (migration 004) — never `status`.
+        const persistResult = await persistV2Result(supabase, job.id, buildV2PersistencePayload(v2, null, new Date()));
+        if (!persistResult.ok) {
+          if (/does not exist|schema cache|could not find/i.test(persistResult.error ?? '')) {
+            persistV2 = false;
+            console.warn('[matcher/v2] v2 columns missing — apply database/migrations/004_v2_persistence.sql to store v2 details. Continuing without persisting.');
+          } else {
+            console.error(`[matcher/v2] persistence failed for ${job.id}: ${persistResult.error}`);
+          }
+        }
       }
     }
 
@@ -126,6 +137,17 @@ async function main() {
         .update({ status: 'filtered', match_justification: `Filtered: ${reason}` })
         .eq('id', job.id);
       console.log(`[matcher] gated ${job.company}: ${reason}`);
+      stats.gatedV1++;
+      continue;
+    }
+
+    // LIVE mode: a v2 veto filters the job out before spending any Gemini quota.
+    if (V2_MODE === 'live' && v2?.vetoed) {
+      await supabase.from('applications')
+        .update({ status: 'filtered', match_justification: `Filtered (v2): ${v2.reason}` })
+        .eq('id', job.id);
+      console.log(`[matcher] v2-vetoed ${job.company} — ${job.role}: ${v2.reason}`);
+      stats.vetoedV2++;
       continue;
     }
 
@@ -160,14 +182,15 @@ async function main() {
     if (updateErr) {
       console.error(`[matcher] Update failed for ${job.id}:`, updateErr.message);
     } else {
-      console.log(`[matcher] ${job.company} — ${job.role}: score=${result.match_score}`);
+      stats.scored++;
+      console.log(`[matcher] ${job.company} — ${job.role}: score=${result.match_score}${v2?.needs_review ? ' (v2: needs review)' : ''}`);
     }
 
     // Stay under free-tier RPM limits (~15/min) with comfortable headroom.
     await sleep(4000);
   }
 
-  console.log('[matcher] Done.');
+  console.log(`[matcher] Done. gated by rules: ${stats.gatedV1}, vetoed by v2: ${stats.vetoedV2}, scored by Gemini: ${stats.scored}.`);
 }
 
 main().catch(err => {

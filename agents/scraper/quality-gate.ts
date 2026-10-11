@@ -24,12 +24,27 @@ function getTargetKeywords(): string[] {
   return ['ai', 'ml', 'machine learning', 'genai', 'llm', 'nlp', 'computer vision', 'data scientist', 'mlops', 'ai engineer', 'research scientist', 'deep learning', 'generative', 'foundation model', 'data science'];
 }
 
-/** Largest years-of-experience figure mentioned in the text ("5+" counts as 5.5). */
-function maxYears(t: string): number {
+// Context words that mean "N years" is about the candidate's experience, as
+// opposed to company marketing ("founded 10 years ago", "20 years in business").
+const EXPERIENCE_CONTEXT = /\b(experience|experienced|expertise|exp\b|hands[- ]on|background|track record|proven|working with|work in|professional|industry)\b/i;
+
+/**
+ * Largest years-of-experience REQUIREMENT in the text ("5+" counts as 5.5).
+ * Only counts a "N years" figure when experience-related wording appears in the
+ * same sentence-sized window around it. The old version took the biggest "N years"
+ * anywhere, so company text such as "founded 10 years ago" wrongly rejected jobs.
+ */
+export function maxYears(t: string): number {
+  const text = t || '';
   const re = /(\d+)\s*(\+)?\s*(?:years|yrs)/gi;
   let m: RegExpExecArray | null;
   let mx = 0;
-  while ((m = re.exec(t || '')) !== null) {
+  while ((m = re.exec(text)) !== null) {
+    const start = Math.max(0, m.index - 70);
+    const end = Math.min(text.length, m.index + m[0].length + 70);
+    // Stay within the sentence/bullet the figure appears in.
+    const window = text.slice(start, end).split(/[.!?\n\r•]/).find(seg => seg.includes(m![0])) ?? '';
+    if (!EXPERIENCE_CONTEXT.test(window)) continue;
     const eff = parseInt(m[1], 10) + (m[2] ? 0.5 : 0);
     if (eff > mx) mx = eff;
   }

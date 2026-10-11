@@ -17,7 +17,7 @@ import { createClient } from '@supabase/supabase-js';
 dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
 
 const MAX_MESSAGE_CHARS = 3500; // Telegram hard limit is 4096; leave headroom
-const MATCHED_LIMIT = 15;
+const MATCHED_LIMIT = 10;
 const FILTERED_LIMIT = 40;
 const FALLBACK_WINDOW_HOURS = 72;
 
@@ -43,9 +43,9 @@ function attr(s: string): string {
 
 export function formatMatchedLine(j: JobRow, rank: number): string {
   const score = j.match_score != null ? `${j.match_score}` : '–';
-  const loc = j.location ? `\n   📍 ${esc(j.location)}` : '';
-  const link = j.jd_url ? `\n   🔗 <a href="${attr(j.jd_url)}">View job</a>` : '';
-  return `${rank}. <b>${score}</b> · ${esc(j.company)} — ${esc(j.role)}${loc}${link}`;
+  const where = [j.location ? `📍 ${esc(j.location)}` : '', j.jd_url ? `<a href="${attr(j.jd_url)}">Open job</a>` : '']
+    .filter(Boolean).join(' · ');
+  return `${rank}. <b>${score}</b> ${esc(j.company)} — ${esc(j.role)}${where ? `\n    ${where}` : ''}`;
 }
 
 export function formatFilteredLine(j: JobRow): string {
@@ -201,21 +201,14 @@ async function main() {
   const counts = await statusCounts(sb);
   const { rows: matched, tracked } = await fetchNewMatched(sb);
 
-  const header = [
-    '📊 <b>Job Hunt run summary</b>',
-    `Waiting to be scored: <b>${counts.scraped}</b>`,
-    `Matched (worth a look): <b>${counts.matched}</b>`,
-    `Filtered out: <b>${counts.filtered}</b>`,
-    `Approved: <b>${counts.approved}</b> · Applied: <b>${counts.applied}</b>`,
+  const lines = [
+    `📊 <b>Job Hunt</b> · to score <b>${counts.scraped}</b> · matched <b>${counts.matched}</b> · filtered <b>${counts.filtered}</b> · approved <b>${counts.approved}</b> · applied <b>${counts.applied}</b>`,
+    '',
+    matched.length ? `🎯 <b>Top ${matched.length} new matches</b>` : 'No new matched jobs this time.',
+    ...matched.map((j, i) => formatMatchedLine(j, i + 1)),
   ];
-  let ok = await send(header.join('\n'));
-
-  if (matched.length) {
-    const lines = ['', '🎯 <b>New matches</b> (best first)', ...matched.map((j, i) => formatMatchedLine(j, i + 1))];
-    for (const chunk of chunkLines(lines)) ok = (await send(chunk)) && ok;
-  } else {
-    ok = (await send('No new matched jobs this time.')) && ok;
-  }
+  let ok = true;
+  for (const chunk of chunkLines(lines)) ok = (await send(chunk)) && ok;
 
   if (process.env.TELEGRAM_INCLUDE_FILTERED === 'true') {
     const filtered = await fetchFiltered(sb);
