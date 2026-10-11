@@ -90,6 +90,8 @@ function hintFor(r: TgResult): string {
   const d = (r.description ?? '').toLowerCase();
   if (r.status === 401 || d.includes('unauthorized'))
     return 'Telegram rejected the bot token. Copy the FULL token from @BotFather (/mybots → your bot → API Token); if you revoked it, use the new one.';
+  if (d.includes("can't send messages to the bot"))
+    return 'TELEGRAM_CHAT_ID is the ID of a BOT (very likely this bot\'s own number — the digits before the colon in its token), not your personal chat. Message @userinfobot in Telegram, copy the "Id" it replies with, and save that as TELEGRAM_CHAT_ID.';
   if (d.includes('chat not found'))
     return 'Chat not found. Open your bot in Telegram and press Start (or send it any message) first, and check TELEGRAM_CHAT_ID is your numeric id (see @userinfobot).';
   if (d.includes('blocked'))
@@ -107,6 +109,10 @@ async function validateAndGetSender(): Promise<((html: string) => Promise<boolea
   }
   if (!/^\d+:[A-Za-z0-9_-]{30,}$/.test(token)) {
     console.error('[digest] TELEGRAM_BOT_TOKEN does not look like a BotFather token (expected "<digits>:<letters>", e.g. 123456789:AAH…). Copy the full token including the number before the colon.');
+    return null;
+  }
+  if (chatId === token.split(':')[0]) {
+    console.error('[digest] TELEGRAM_CHAT_ID equals this bot\'s own id (the digits before the colon in the token). Use YOUR personal chat id instead: message @userinfobot in Telegram and copy the "Id" it replies with.');
     return null;
   }
   const me = await tg(token, 'getMe');
