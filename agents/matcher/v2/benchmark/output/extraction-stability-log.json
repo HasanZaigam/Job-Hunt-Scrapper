@@ -1,0 +1,41 @@
+{
+  "summary": [
+    {
+      "job_id": "scoring-01-genai-backend-strong-match",
+      "company": "Fernbridge AI",
+      "role": "AI Software Engineer",
+      "run_counts": [
+        8,
+        7,
+        8
+      ],
+      "count_spread": 1,
+      "avg_jaccard": 0.773
+    },
+    {
+      "job_id": "scoring-03-llm-rag-strong-match",
+      "company": "Trellis AI",
+      "role": "LLM Engineer",
+      "run_counts": [
+        5,
+        5,
+        5
+      ],
+      "count_spread": 0,
+      "avg_jaccard": 1
+    },
+    {
+      "job_id": "scoring-06-genai-agents-strong-match",
+      "company": "Solace Robotics",
+      "role": "AI Software Engineer",
+      "run_counts": [
+        6,
+        6,
+        6
+      ],
+      "count_spread": 0,
+      "avg_jaccard": 1
+    }
+  ],
+  "overallAvgJaccard": 0.9243333333333333
+}

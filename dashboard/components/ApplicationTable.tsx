@@ -176,10 +176,10 @@ export function ApplicationTable({ applications, onStatusChange }: Props) {
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap items-center gap-3 text-xs font-medium">
                       {app.status === 'approved' && app.resume_storage_url && (
-                        <a href={app.resume_storage_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Resume</a>
+                        <a href={`${app.resume_storage_url}?t=${Date.now()}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Resume</a>
                       )}
                       {app.status === 'approved' && app.cover_letter_storage_url && (
-                        <a href={app.cover_letter_storage_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Cover</a>
+                        <a href={`${app.cover_letter_storage_url}?t=${Date.now()}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Cover</a>
                       )}
                       {(app.status === 'matched' && app.is_manual_required) || app.status === 'approved' ? (
                         <a href={app.jd_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground">Apply <ExternalLink className="h-3 w-3" /></a>
@@ -208,9 +208,10 @@ export function ApplicationTable({ applications, onStatusChange }: Props) {
                       </div>
                     )}
 
-                    {/* approved (docs ready) → mark applied + remove */}
+                    {/* approved (docs ready) → regen docs + mark applied + remove */}
                     {app.status === 'approved' && (
                       <div className="flex flex-wrap items-center gap-3 text-xs font-medium">
+                        <ApproveButton label="Regen Docs" applicationId={app.id} onStatusChange={handleStatusChange} />
                         <PillButton tone="success" onClick={() => markApplied(app.id)}>Mark applied</PillButton>
                         <PillButton tone="danger" onClick={() => dismiss(app.id)}>Remove</PillButton>
                       </div>

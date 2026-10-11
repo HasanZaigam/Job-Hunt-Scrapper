@@ -4,6 +4,8 @@
 // directly via fetch — no @google/generative-ai dependency needed.
 
 const MODELS = [
+  'gemini-3.5-flash-lite',
+  'gemini-3.5-flash',
   'gemini-2.5-flash-lite',
   'gemini-flash-lite-latest',
   'gemini-2.0-flash-lite',
@@ -45,6 +47,11 @@ export async function generateWithRetry(prompt: string, opts: GenerateOptions = 
         lastErr = new Error(`${model} ${res.status}`);
         continue;
       }
+      if (res.status === 404 || res.status === 403) {
+        console.warn(`[${tag}] ${model} status ${res.status} (unavailable) — switching model…`);
+        lastErr = new Error(`${model} ${res.status}`);
+        continue;
+      }
       if (!res.ok) {
         const txt = await res.text();
         throw new Error(`Gemini ${res.status}: ${txt.slice(0, 300)}`);
@@ -73,4 +80,65 @@ export function parseJsonResponse<T>(text: string): T {
     .replace(/```\s*$/i, '')
     .trim();
   return JSON.parse(cleaned) as T;
+}
+
+export async function generateWithPdf(prompt: string, pdfBase64: string, opts: GenerateOptions = {}): Promise<string> {
+  const { systemInstruction, generationConfig, tag = 'gemini-pdf' } = opts;
+  const key = process.env.GOOGLE_API_KEY;
+  if (!key) throw new Error('GOOGLE_API_KEY not configured');
+
+  const body: Record<string, unknown> = {
+    contents: [{
+      role: 'user',
+      parts: [
+        { text: prompt },
+        {
+          inlineData: {
+            mimeType: 'application/pdf',
+            data: pdfBase64,
+          }
+        }
+      ]
+    }],
+    ...(systemInstruction ? { systemInstruction: { parts: [{ text: systemInstruction }] } } : {}),
+    ...(generationConfig ? { generationConfig } : {}),
+  };
+
+  let lastErr: unknown;
+  for (const model of MODELS) {
+    try {
+      const res = await fetch(`${ENDPOINT}/${model}:generateContent?key=${key}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (res.status === 429 || res.status === 503) {
+        console.warn(`[${tag}] ${model} ${res.status} — switching model…`);
+        lastErr = new Error(`${model} ${res.status}`);
+        continue;
+      }
+      if (res.status === 404 || res.status === 403) {
+        console.warn(`[${tag}] ${model} status ${res.status} (unavailable) — switching model…`);
+        lastErr = new Error(`${model} ${res.status}`);
+        continue;
+      }
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(`Gemini ${res.status}: ${txt.slice(0, 300)}`);
+      }
+
+      const json = await res.json();
+      const text: string | undefined = json?.candidates?.[0]?.content?.parts
+        ?.map((p: { text?: string }) => p.text || '')
+        .join('')
+        .trim();
+      if (text) return text;
+      lastErr = new Error(`${model} returned no text`);
+    } catch (err) {
+      lastErr = err;
+      console.warn(`[${tag}] ${model} error:`, (err as Error).message);
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error('Gemini generation failed');
 }

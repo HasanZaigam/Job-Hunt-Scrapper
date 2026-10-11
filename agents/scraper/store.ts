@@ -2,12 +2,25 @@ import { createClient } from '@supabase/supabase-js';
 import { fetchGreenhouseJobs, type JobListing } from './greenhouse';
 import { fetchLeverJobs } from './lever';
 import { fetchAshbyJobs } from './ashby';
+import fs from 'fs';
+import path from 'path';
 
 export type Ats = 'greenhouse' | 'lever' | 'ashby';
 
-export const TARGET_LOCATIONS = [
-  'chennai', 'bangalore', 'bengaluru', 'karnataka', 'tamil nadu', 'remote', 'india',
-];
+export function getTargetLocations(): string[] {
+  try {
+    const p = path.resolve(__dirname, '../resume-generator/base-resume.json');
+    if (fs.existsSync(p)) {
+      const data = JSON.parse(fs.readFileSync(p, 'utf-8'));
+      if (data.target_locations && Array.isArray(data.target_locations)) {
+        return data.target_locations.map((loc: string) => loc.toLowerCase());
+      }
+    }
+  } catch (err) {
+    console.error('[store] Error loading target locations from base-resume.json:', err);
+  }
+  return ['chennai', 'bangalore', 'bengaluru', 'karnataka', 'tamil nadu', 'remote', 'india'];
+}
 
 export function supabaseClient() {
   return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_KEY!);
@@ -15,7 +28,8 @@ export function supabaseClient() {
 
 export function isTargetLocation(location: string): boolean {
   const lower = (location ?? '').toLowerCase();
-  return TARGET_LOCATIONS.some(loc => lower.includes(loc));
+  const targets = getTargetLocations();
+  return targets.some(loc => lower.includes(loc));
 }
 
 export async function getExistingUrls(supabase: ReturnType<typeof supabaseClient>): Promise<Set<string>> {

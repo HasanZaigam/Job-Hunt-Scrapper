@@ -1,0 +1,122 @@
+[
+  {
+    "id": "senior-title-explicit",
+    "company": "Acme AI",
+    "role": "Senior AI Engineer",
+    "location": "Bengaluru, India (Hybrid)",
+    "jd_text": "We are looking for a Senior AI Engineer to join our GenAI platform team. You will design and ship production LLM pipelines, own our RAG infrastructure end to end, and mentor other engineers. Strong Python and distributed systems background required. You will work closely with product and research to define the roadmap for our generative AI features across the company.",
+    "expected_vetoed": true,
+    "expected_reason_contains": "band",
+    "note": "Title says 'Senior' but v1's SENIOR regex omits that word entirely -- known v1 leak."
+  },
+  {
+    "id": "sr-abbrev-title",
+    "company": "Nimbus Labs",
+    "role": "Sr. Backend Engineer",
+    "location": "Remote",
+    "jd_text": "Sr. Backend Engineer needed to build scalable APIs and microservices for our AI-powered analytics product. You'll work with FastAPI, Postgres, and Redis, and take ownership of core backend services used by our GenAI recommendation engine across the platform.",
+    "expected_vetoed": true,
+    "expected_reason_contains": "band",
+    "note": "Abbreviated 'Sr.' also bypasses v1's title regex."
+  },
+  {
+    "id": "years-range-8-10",
+    "company": "Vertex Systems",
+    "role": "AI Platform Engineer",
+    "location": "Noida, India",
+    "jd_text": "Join our AI platform team as an AI Platform Engineer. Ideal candidates have 8-10 years of experience building large scale distributed systems and deep learning infrastructure. You will own the roadmap for our internal LLM serving stack and collaborate with research teams on model deployment across the company.",
+    "expected_vetoed": true,
+    "expected_reason_contains": "band",
+    "note": "Control case: v1 happens to catch this because '10 years' alone matches its single-number regex, even though it can't parse '8-10' as a range."
+  },
+  {
+    "id": "decade-spelled-out",
+    "company": "Solace Robotics",
+    "role": "AI Engineer",
+    "location": "Delhi, India",
+    "jd_text": "AI Engineer role for someone with a decade of experience shipping production machine learning systems end to end. You will lead our computer vision pipeline, drive architecture decisions for our GenAI-powered robotics platform across multiple product lines, and partner with hardware and research teams on new model deployments in the field.",
+    "expected_vetoed": true,
+    "expected_reason_contains": "band",
+    "note": "Spelled-out 'a decade' has no digits at all -- invisible to v1's \\d+ regex."
+  },
+  {
+    "id": "wrong-country-onsite",
+    "company": "Beacon AI",
+    "role": "AI Engineer",
+    "location": "San Francisco, CA, USA (Onsite)",
+    "jd_text": "AI Engineer to build GenAI features for our consumer product. You will work on LLM integration, prompt engineering, and backend services using Python and FastAPI. Onsite in our San Francisco office, collaborating daily with the product and design teams on new generative AI experiences, and partnering with growth and data teams to ship experiments quickly.",
+    "expected_vetoed": true,
+    "expected_reason_contains": "location",
+    "note": "US onsite role with an India-only/remote candidate -- gateReason() has no location parameter at all, so this is invisible to v1's matcher gate entirely."
+  },
+  {
+    "id": "ambiguous-location-string",
+    "company": "Delta Cognition",
+    "role": "Backend Engineer",
+    "location": "Worldwide",
+    "jd_text": "Backend Engineer to build APIs and services powering our GenAI-based search product. Strong Python or TypeScript experience required. Work with a globally distributed team building LLM-backed retrieval systems used by customers across many regions, and help define our data infrastructure roadmap for the next year.",
+    "expected_vetoed": true,
+    "expected_reason_contains": "location",
+    "note": "Vague location string, no country/city/remote signal at all -- gateReason() has no location parameter, so v1 admits this unconditionally; v2 refuses to guess and flags for review."
+  },
+  {
+    "id": "good-fit-entry",
+    "company": "Fernbridge AI",
+    "role": "Software Engineer",
+    "location": "Noida, India",
+    "jd_text": "Software Engineer role building backend services for our GenAI product suite. 1-2 years of experience with Python or Node.js, REST APIs, and cloud infrastructure. You will integrate LLM APIs into our platform, build event-driven pipelines, and collaborate closely with the AI research team on new generative features.",
+    "expected_vetoed": false,
+    "expected_reason_contains": null,
+    "note": "True positive: should clear both gates."
+  },
+  {
+    "id": "good-fit-remote",
+    "company": "Kestrel Data",
+    "role": "Backend Engineer",
+    "location": "Remote",
+    "jd_text": "Backend Engineer for a fully remote AI Engineer team building GenAI-powered data products used across the company. 2-3 years of experience with backend systems, APIs, and LLM integration required. You will build and maintain services powering our AI Engineer data pipeline used by data scientists across the org, and partner closely with the platform team on reliability and scaling as usage grows.",
+    "expected_vetoed": false,
+    "expected_reason_contains": null,
+    "note": "True positive: remote-eligible, band within tolerance."
+  },
+  {
+    "id": "staff-title-no-years-in-body",
+    "company": "Orbital Minds",
+    "role": "Staff AI Engineer",
+    "location": "Bengaluru, India",
+    "jd_text": "Staff AI Engineer to define technical direction for our GenAI platform. You will set architecture standards, review designs across teams, and drive our LLM infrastructure strategy company-wide. Strong background in distributed systems and machine learning infrastructure expected.",
+    "expected_vetoed": true,
+    "expected_reason_contains": "band",
+    "note": "v1's SENIOR regex does catch 'staff' via title -- both v1 and v2 should agree here (control case)."
+  },
+  {
+    "id": "mid-level-two-years-plus",
+    "company": "Trellis AI",
+    "role": "AI Engineer II",
+    "location": "Gurugram, India",
+    "jd_text": "AI Engineer II role focused on building GenAI-powered internal tools for our data and platform teams. Looking for someone with 3+ years of experience in Python and LLM-based application development, comfortable owning services end to end. You will build RAG pipelines, integrate vector databases, evaluate embedding models, and ship new GenAI features across our internal tooling, partnering closely with data scientists and platform engineers on rollout and monitoring.",
+    "expected_vetoed": false,
+    "expected_reason_contains": null,
+    "note": "3+ years is within tolerance (max=junior_2_4 + 1 band = mid_4_6) -- should pass on both gates."
+  },
+  {
+    "id": "hybrid-wrong-city",
+    "company": "Ironclad Systems",
+    "role": "Backend Engineer",
+    "location": "Austin, TX (Hybrid)",
+    "jd_text": "Backend Engineer to build APIs for our AI Engineer-driven GenAI product. 2 years of experience with backend development and cloud services required. Hybrid schedule based out of our Austin office, working alongside the AI research team on LLM-powered product features and quarterly planning sessions.",
+    "expected_vetoed": true,
+    "expected_reason_contains": "location",
+    "note": "Hybrid in a US city outside the candidate's onsite list and outside India -- experience is fine, should fail on location alone (v1 has no location check to catch this at all)."
+  },
+  {
+    "id": "director-title",
+    "company": "Cortex Dynamics",
+    "role": "Director of AI Engineering",
+    "location": "Remote",
+    "jd_text": "Director of AI Engineering to lead our GenAI and LLM strategy. You will manage a team of AI Engineers, set technical vision, and represent AI Engineering in executive planning for our generative AI product roadmap.",
+    "expected_vetoed": true,
+    "expected_reason_contains": "band",
+    "note": "Control case: both v1 and v2 should catch this via title."
+  }
+]

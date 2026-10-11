@@ -4,7 +4,18 @@ import { createClient } from '@supabase/supabase-js';
 import { buildMatchingPrompt } from './prompts';
 import { generateWithRetry } from '../lib/gemini';
 import { gateReason } from '../scraper/quality-gate';
+import { evaluateHardVeto } from './v2/hard-veto';
+import { buildDecisionLog } from './v2/decision-log';
+import { buildV2PersistencePayload, persistV2Result } from './v2/persistence';
 import baseResume from '../resume-generator/base-resume.json';
+
+// Milestone 1 of the v2 rollout plan: experience + location hard-veto gates,
+// built behind this flag, running in shadow mode only. When enabled, v2's
+// gate decision is computed and logged alongside v1's for every job, but
+// v1 (gateReason) remains the sole source of truth for `status` — no live
+// traffic is affected. Set MATCHER_ENGINE_V2_ENABLED=true to turn on shadow
+// logging; unset/false is a full no-op (zero behavior change, zero risk).
+const V2_SHADOW_ENABLED = process.env.MATCHER_ENGINE_V2_ENABLED === 'true';
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
 
@@ -67,7 +78,7 @@ async function main() {
   // fresh scrapes, so nothing starves when the daily Gemini budget runs out.
   const { data: jobs, error } = await supabase
     .from('applications')
-    .select('id, company, role, jd_text')
+    .select('id, company, role, jd_text, location')
     .eq('status', 'scraped')
     .order('created_at', { ascending: true });
 
@@ -89,6 +100,27 @@ async function main() {
 
     // Deterministic quality gate — drop senior/thin/spam before Gemini.
     const reason = gateReason(job.role, job.jd_text);
+
+    // Shadow-only v2 hard veto (experience + location). Never affects status.
+    // Logged as one structured JSON line per job (not prose) so every
+    // decision — v1's, v2's, and the gate-by-gate reasoning behind v2's —
+    // is machine-parseable and explainable after the fact.
+    if (V2_SHADOW_ENABLED) {
+      const v2 = evaluateHardVeto(job.role, job.jd_text, job.location || '');
+      const log = buildDecisionLog(job, reason, v2);
+      console.log(`[matcher/v2-shadow] ${JSON.stringify(log)}`);
+
+      // Persistence foundation only — this path runs gates only (zero
+      // Gemini calls, same as before), so `opportunity` is always null here
+      // and opportunity_score/priority_bucket persist as null. Never
+      // touches `status` or any other V1 column. See agents/matcher/v2/persistence.ts.
+      const payload = buildV2PersistencePayload(v2, null, new Date());
+      const persistResult = await persistV2Result(supabase, job.id, payload);
+      if (!persistResult.ok) {
+        console.error(`[matcher/v2-shadow] persistence failed for ${job.id}: ${persistResult.error}`);
+      }
+    }
+
     if (reason) {
       await supabase.from('applications')
         .update({ status: 'filtered', match_justification: `Filtered: ${reason}` })

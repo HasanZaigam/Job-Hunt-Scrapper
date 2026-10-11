@@ -11,6 +11,8 @@ export function TopBar({ onToggle }: { onToggle: () => void }) {
   const [q, setQ] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [locations, setLocations] = useState<string[]>(['Chennai', 'Bengaluru']);
+  const [profile, setProfile] = useState<{ name: string; location: string; target_locations?: string[] } | null>(null);
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -23,6 +25,20 @@ export function TopBar({ onToggle }: { onToggle: () => void }) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
     }
     document.addEventListener('mousedown', onDoc);
+
+    // Fetch dynamic profile details
+    fetch('/api/profile')
+      .then(res => res.json())
+      .then(data => {
+        if (!data.error) {
+          setProfile(data);
+          if (data.target_locations && Array.isArray(data.target_locations)) {
+            setLocations(data.target_locations);
+          }
+        }
+      })
+      .catch(() => {});
+
     return () => document.removeEventListener('mousedown', onDoc);
   }, []);
 
@@ -53,10 +69,15 @@ export function TopBar({ onToggle }: { onToggle: () => void }) {
       </form>
 
       <div className="ml-auto flex items-center gap-2">
-        <div className="hidden items-center gap-1.5 lg:flex">
-          <span className="pill bg-muted text-muted-foreground"><MapPin className="h-3 w-3" /> Chennai</span>
-          <span className="pill bg-muted text-muted-foreground"><MapPin className="h-3 w-3" /> Bangalore</span>
-        </div>
+        {locations.length > 0 && (
+          <div className="hidden items-center gap-1.5 lg:flex">
+            {locations.map(loc => (
+              <span key={loc} className="pill bg-muted text-muted-foreground">
+                <MapPin className="h-3 w-3" /> {loc}
+              </span>
+            ))}
+          </div>
+        )}
 
         <ResumeUpload />
 
@@ -67,8 +88,12 @@ export function TopBar({ onToggle }: { onToggle: () => void }) {
             onClick={() => setMenuOpen(o => !o)}
             className="flex items-center gap-2 rounded-full border border-border bg-background py-1 pl-1 pr-2.5 transition-colors hover:bg-muted"
           >
-            <span className="grid h-7 w-7 place-items-center rounded-full bg-primary text-xs font-bold text-primary-foreground">J</span>
-            <span className="hidden text-sm font-medium text-foreground sm:block">Jagadeesh</span>
+            <span className="grid h-7 w-7 place-items-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+              {profile?.name ? profile.name[0].toUpperCase() : 'J'}
+            </span>
+            <span className="hidden text-sm font-medium text-foreground sm:block">
+              {profile?.name ? profile.name.split(' ')[0] : 'Jagadeesh'}
+            </span>
             <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
           </button>
 

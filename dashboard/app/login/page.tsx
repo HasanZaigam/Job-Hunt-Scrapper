@@ -75,7 +75,7 @@ function LoginInner() {
           </ul>
         </div>
 
-        <p className="text-xs text-white/60">Built for Jagadeesh · Chennai · Bangalore</p>
+        <p className="text-xs text-white/60">Personal Job Hunt Agent Dashboard</p>
       </div>
 
       {/* RIGHT — login form */}

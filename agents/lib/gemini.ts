@@ -6,6 +6,8 @@ import { GoogleGenerativeAI, type GenerationConfig } from '@google/generative-ai
 // multiplies the free daily scoring budget from ~20 to ~80-100/day with no
 // billing. Ordered cheapest/lightest first (fine for matching & classifying).
 const MODELS = [
+  'gemini-3.5-flash-lite',
+  'gemini-3.5-flash',
   'gemini-2.5-flash-lite',
   'gemini-flash-lite-latest',
   'gemini-2.0-flash-lite',
@@ -44,18 +46,22 @@ export interface GenerateOptions {
   tag?: string;
 }
 
+export interface GenerateResult {
+  text: string;
+  model: string;
+}
+
 /**
- * Generate text from Gemini with free-tier resilience:
- *  - retries 503 (model busy) with exponential backoff
- *  - on 429, respects Google's RetryInfo delay; if the daily cap is hit,
- *    falls through to the next model in MODELS
- * Reads GOOGLE_API_KEY lazily so callers' dotenv.config() has already run.
- * Throws the last error if every model/attempt is exhausted.
+ * Shared implementation — retries 503 (model busy) with exponential backoff,
+ * and on 429 either respects Google's RetryInfo delay or falls through to
+ * the next model in MODELS when the daily cap is hit. Reads GOOGLE_API_KEY
+ * lazily so callers' dotenv.config() has already run. Throws the last error
+ * if every model/attempt is exhausted.
  */
-export async function generateWithRetry(
+async function generateWithRetryInternal(
   prompt: string,
   opts: GenerateOptions = {}
-): Promise<string> {
+): Promise<GenerateResult> {
   const { systemInstruction, generationConfig, tag = 'gemini' } = opts;
   const genai = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
 
@@ -70,7 +76,7 @@ export async function generateWithRetry(
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       try {
         const result = await model.generateContent(prompt);
-        return result.response.text().trim();
+        return { text: result.response.text().trim(), model: modelName };
       } catch (err: any) {
         lastErr = err;
         const status = err?.status;
@@ -97,10 +103,40 @@ export async function generateWithRetry(
           console.warn(`[${tag}] ${modelName} rate limited, switching model…`);
           break;
         }
+        if (status === 404 || status === 403) {
+          console.warn(`[${tag}] ${modelName} status ${status} (unavailable), switching model…`);
+          break;
+        }
         // Unknown error — don't hammer it.
         throw err;
       }
     }
   }
   throw lastErr;
+}
+
+/**
+ * Generate text from Gemini with free-tier resilience (see
+ * generateWithRetryInternal). Unchanged public signature/behavior for
+ * existing callers — returns just the text.
+ */
+export async function generateWithRetry(
+  prompt: string,
+  opts: GenerateOptions = {}
+): Promise<string> {
+  const { text } = await generateWithRetryInternal(prompt, opts);
+  return text;
+}
+
+/**
+ * Same resilience behavior as generateWithRetry, but also reports which
+ * model in the fallback chain actually produced the response — needed
+ * wherever a decision must be traceable back to a specific model version
+ * (e.g. shadow-mode skill-fit scoring).
+ */
+export async function generateWithModelInfo(
+  prompt: string,
+  opts: GenerateOptions = {}
+): Promise<GenerateResult> {
+  return generateWithRetryInternal(prompt, opts);
 }

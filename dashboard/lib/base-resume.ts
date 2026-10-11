@@ -13,6 +13,10 @@ const CANDIDATES = [
 
 let cache: BaseResume | null = null;
 
+export function resetBaseResumeCache(): void {
+  cache = null;
+}
+
 export async function loadBaseResume(): Promise<BaseResume> {
   if (cache) return cache;
   for (const p of CANDIDATES) {

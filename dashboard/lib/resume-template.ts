@@ -166,46 +166,46 @@ export function renderResumeHTML(data: BaseResume, t: ResumeTailoring): string {
   *{ box-sizing:border-box; margin:0; padding:0; }
   @page{ size:A4; margin:0; }
   html,body{ background:#fff; }
-  body{ font-family:"Carlito","Calibri","Segoe UI",Arial,sans-serif; color:var(--ink); font-size:10.3px; line-height:1.45; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-  .page{ width:210mm; min-height:297mm; padding:14mm 13mm 12mm; margin:0 auto; }
-  header{ text-align:center; padding-bottom:8px; }
-  h1{ font-size:30px; letter-spacing:2px; font-weight:700; color:var(--blue); text-transform:uppercase; }
-  .subtitle{ font-size:12px; font-weight:700; color:var(--ink); margin-top:3px; letter-spacing:.3px; }
-  .contact{ margin-top:7px; font-size:10px; color:var(--muted); display:flex; justify-content:center; flex-wrap:wrap; gap:6px 14px; }
+  body{ font-family:"Carlito","Calibri","Segoe UI",Arial,sans-serif; color:var(--ink); font-size:9.5px; line-height:1.35; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .page{ width:210mm; min-height:297mm; padding:6mm 10mm 6mm; margin:0 auto; }
+  header{ text-align:center; padding-bottom:4px; }
+  h1{ font-size:26px; letter-spacing:2px; font-weight:700; color:var(--blue); text-transform:uppercase; }
+  .subtitle{ font-size:11px; font-weight:700; color:var(--ink); margin-top:2px; letter-spacing:.3px; }
+  .contact{ margin-top:5px; font-size:9.2px; color:var(--muted); display:flex; justify-content:center; flex-wrap:wrap; gap:4px 12px; }
   .contact a{ color:var(--blue-dark); text-decoration:none; font-weight:600; }
   .contact .sep{ color:#c7cddb; }
-  .hrule{ height:2.4px; background:var(--rule); border-radius:2px; margin:9px 0 0; }
-  .body{ display:flex; gap:20px; margin-top:14px; }
-  .left{ width:33%; }
-  .right{ width:67%; }
-  h2{ font-size:11.5px; font-weight:700; color:var(--blue); text-transform:uppercase; letter-spacing:.8px; margin:0 0 6px; padding-bottom:3px; border-bottom:1.6px solid var(--rule); }
-  section{ margin-bottom:14px; }
+  .hrule{ height:2px; background:var(--rule); border-radius:2px; margin:5px 0 0; }
+  .body{ display:flow-root; margin-top:10px; }
+  .left{ float:left; width:31%; }
+  .right{ float:right; width:65%; }
+  h2{ font-size:11px; font-weight:700; color:var(--blue); text-transform:uppercase; letter-spacing:.8px; margin:0 0 4px; padding-bottom:2px; border-bottom:1.6px solid var(--rule); }
+  section{ margin-bottom:8px; break-inside:avoid; -webkit-column-break-inside:avoid; }
   section:last-child{ margin-bottom:0; }
-  .item{ margin-bottom:9px; }
+  .item{ margin-bottom:6px; }
   .item:last-child{ margin-bottom:0; }
-  .item .title{ font-weight:700; color:var(--ink); font-size:10.6px; }
+  .item .title{ font-weight:700; color:var(--ink); font-size:10px; }
   .item .org{ color:var(--muted); }
-  .item .meta{ color:var(--muted); font-size:9.4px; font-style:italic; }
+  .item .meta{ color:var(--muted); font-size:9px; font-style:italic; }
   .item .grade{ font-weight:600; color:var(--blue-dark); }
-  .skillgroup{ margin-bottom:7px; }
+  .skillgroup{ margin-bottom:5px; }
   .skillgroup .lbl{ font-weight:700; color:var(--ink); }
-  .chips{ display:flex; flex-wrap:wrap; gap:4px; margin-top:3px; }
-  .chip{ background:var(--soft); color:var(--blue-dark); border-radius:4px; padding:1.5px 6px; font-size:9.2px; font-weight:600; }
+  .chips{ display:flex; flex-wrap:wrap; gap:3px; margin-top:2px; }
+  .chip{ background:var(--soft); color:var(--blue-dark); border-radius:4px; padding:1px 5px; font-size:8.8px; font-weight:600; }
   .linklist{ list-style:none; }
-  .linklist li{ margin-bottom:4px; color:var(--muted); }
+  .linklist li{ margin-bottom:3px; color:var(--muted); }
   .linklist li b{ color:var(--ink); }
   .linklist a{ color:var(--blue-dark); text-decoration:none; font-weight:600; }
   .summary{ text-align:justify; color:var(--ink); }
-  .entry{ margin-bottom:11px; }
+  .entry{ margin-bottom:8px; break-inside:avoid; -webkit-column-break-inside:avoid; }
   .entry:last-child{ margin-bottom:0; }
   .entry .row{ display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
-  .entry .role{ font-weight:700; color:var(--ink); font-size:11px; }
-  .entry .date{ color:var(--muted); font-size:9.3px; font-style:italic; white-space:nowrap; }
-  .entry .where{ color:var(--blue-dark); font-weight:600; font-size:10px; margin-top:1px; }
-  .entry .stack{ color:var(--muted); font-size:9.3px; font-style:italic; margin-top:1px; }
-  ul.bullets{ list-style:none; margin-top:4px; }
-  ul.bullets li{ position:relative; padding-left:12px; margin-bottom:3px; color:var(--ink); }
-  ul.bullets li::before{ content:""; position:absolute; left:2px; top:5px; width:4px; height:4px; border-radius:50%; background:var(--blue); }
+  .entry .role{ font-weight:700; color:var(--ink); font-size:10px; }
+  .entry .date{ color:var(--muted); font-size:8.8px; font-style:italic; white-space:nowrap; }
+  .entry .where{ color:var(--blue-dark); font-weight:600; font-size:9.2px; margin-top:1px; }
+  .entry .stack{ color:var(--muted); font-size:8.8px; font-style:italic; margin-top:1px; }
+  ul.bullets{ list-style:none; margin-top:2px; }
+  ul.bullets li{ position:relative; padding-left:10px; margin-bottom:2px; color:var(--ink); }
+  ul.bullets li::before{ content:""; position:absolute; left:2px; top:4px; width:3.5px; height:3.5px; border-radius:50%; background:var(--blue); }
   b{ color:var(--ink); }
 </style>
 </head>

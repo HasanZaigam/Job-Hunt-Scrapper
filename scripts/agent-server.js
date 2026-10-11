@@ -11,19 +11,19 @@ const PROJECT_DIR = path.resolve(__dirname, '..');
 const PORT = 3002;
 
 const AGENTS = {
-  scraper:         ['npx', ['ts-node', 'agents/scraper/index.ts']],
-  discover:        ['npx', ['ts-node', 'agents/scraper/discover.ts']],
-  indeed:          ['npx', ['ts-node', 'agents/scraper/indeed-search.ts']],
-  'daily-scrape':  ['npx', ['ts-node', 'agents/scraper/daily-scrape.ts']],
-  matcher:         ['npx', ['ts-node', 'agents/matcher/index.ts']],
-  'email-monitor': ['npx', ['ts-node', 'agents/email-monitor/index.ts']],
-  'notion-sync':   ['npx', ['ts-node', 'agents/notion-sync/index.ts']],
+  scraper:         ['npx', ['--prefix', 'agents', 'ts-node', 'agents/scraper/index.ts']],
+  discover:        ['npx', ['--prefix', 'agents', 'ts-node', 'agents/scraper/discover.ts']],
+  indeed:          ['npx', ['--prefix', 'agents', 'ts-node', 'agents/scraper/indeed-search.ts']],
+  'daily-scrape':  ['npx', ['--prefix', 'agents', 'ts-node', 'agents/scraper/daily-scrape.ts']],
+  matcher:         ['npx', ['--prefix', 'agents', 'ts-node', 'agents/matcher/index.ts']],
+  'email-monitor': ['npx', ['--prefix', 'agents', 'ts-node', 'agents/email-monitor/index.ts']],
+  'notion-sync':   ['npx', ['--prefix', 'agents', 'ts-node', 'agents/notion-sync/index.ts']],
 };
 
 const AGENTS_WITH_ID = {
-  'resume-generator': (id) => ['npx', ['ts-node', 'agents/resume-generator/index.ts', `--id=${id}`]],
-  'auto-apply':       (id) => ['npx', ['ts-node', 'agents/auto-apply/index.ts', `--id=${id}`]],
-  'notion-sync-id':   (id) => ['npx', ['ts-node', 'agents/notion-sync/index.ts', `--id=${id}`]],
+  'resume-generator': (id) => ['npx', ['--prefix', 'agents', 'ts-node', 'agents/resume-generator/index.ts', `--id=${id}`]],
+  'auto-apply':       (id) => ['npx', ['--prefix', 'agents', 'ts-node', 'agents/auto-apply/index.ts', `--id=${id}`]],
+  'notion-sync-id':   (id) => ['npx', ['--prefix', 'agents', 'ts-node', 'agents/notion-sync/index.ts', `--id=${id}`]],
 };
 
 function runAgent(cmd, args, res) {
@@ -46,7 +46,7 @@ const server = http.createServer((req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`);
   const parts = url.pathname.split('/').filter(Boolean);
 
-  if (req.method !== 'POST' || parts[0] !== 'run') {
+  if ((req.method !== 'POST' && req.method !== 'GET') || parts[0] !== 'run') {
     res.writeHead(404); res.end('Not found'); return;
   }
 

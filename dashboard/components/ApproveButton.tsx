@@ -5,9 +5,10 @@ import { useState } from 'react';
 interface ApproveButtonProps {
   applicationId: string;
   onStatusChange: (id: string, status: string, resumeUrl?: string, coverLetterUrl?: string) => void;
+  label?: string;
 }
 
-export function ApproveButton({ applicationId, onStatusChange }: ApproveButtonProps) {
+export function ApproveButton({ applicationId, onStatusChange, label = 'Approve & Generate' }: ApproveButtonProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -57,7 +58,7 @@ export function ApproveButton({ applicationId, onStatusChange }: ApproveButtonPr
       onClick={handleApprove}
       className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-soft transition-colors hover:bg-primary/90"
     >
-      Approve &amp; Generate
+      {label}
     </button>
   );
 }

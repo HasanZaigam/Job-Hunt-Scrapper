@@ -1,17 +1,30 @@
 import fetch from 'node-fetch';
 import * as dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
 
 const APIFY_API_TOKEN = process.env.APIFY_API_TOKEN!;
 const ACTOR_ID = 'apify~google-search-scraper';
 
-const DISCOVERY_QUERIES = [
-  'site:boards.greenhouse.io ("AI Engineer" OR "GenAI" OR "Machine Learning" OR "LLM Engineer" OR "MLOps") ("Bengaluru" OR "Bangalore" OR "Chennai" OR "India")',
-  'site:jobs.lever.co ("AI Engineer" OR "GenAI" OR "Machine Learning" OR "LLM Engineer" OR "MLOps") ("Bengaluru" OR "Bangalore" OR "Chennai" OR "India")',
-  'site:jobs.ashbyhq.com ("AI Engineer" OR "GenAI" OR "Machine Learning" OR "LLM Engineer" OR "MLOps") ("Bengaluru" OR "Bangalore" OR "Chennai" OR "India")',
-];
+function getSearchParameters() {
+  try {
+    const p = path.resolve(__dirname, '../resume-generator/base-resume.json');
+    if (fs.existsSync(p)) {
+      const data = JSON.parse(fs.readFileSync(p, 'utf-8'));
+      const kws = data.target_keywords || ["AI Engineer", "GenAI", "Machine Learning", "LLM Engineer", "MLOps"];
+      const locs = data.target_locations || ["Bengaluru", "Bangalore", "Chennai", "India"];
+      return { kws, locs };
+    }
+  } catch (err) {
+    console.error('[apify-search] Error reading search parameters from base-resume.json:', err);
+  }
+  return {
+    kws: ["AI Engineer", "GenAI", "Machine Learning", "LLM Engineer", "MLOps"],
+    locs: ["Bengaluru", "Bangalore", "Chennai", "India"],
+  };
+}
 
 interface DiscoveredJob {
   company: string;
@@ -74,10 +87,20 @@ export async function discoverNewJobs(dryRun = false): Promise<DiscoveredJob[]> 
     return [];
   }
 
+  const { kws, locs } = getSearchParameters();
+  const keywordsStr = kws.map((k: string) => `"${k}"`).join(' OR ');
+  const locationsStr = locs.map((l: string) => `"${l}"`).join(' OR ');
+
+  const queries = [
+    `site:boards.greenhouse.io (${keywordsStr}) (${locationsStr})`,
+    `site:jobs.lever.co (${keywordsStr}) (${locationsStr})`,
+    `site:jobs.ashbyhq.com (${keywordsStr}) (${locationsStr})`,
+  ];
+
   const discovered: DiscoveredJob[] = [];
   const seen = new Set<string>();
 
-  for (const query of DISCOVERY_QUERIES) {
+  for (const query of queries) {
     console.log(`[apify] querying: ${query}`);
     const urls = await runApifyActor(query);
 

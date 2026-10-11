@@ -5,6 +5,7 @@ import { fetchGreenhouseJobs, type JobListing } from './greenhouse';
 import { fetchLeverJobs } from './lever';
 import { fetchAshbyJobs } from './ashby';
 import companyList from './company-list.json';
+import { isTargetLocation } from './store';
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
 
@@ -15,13 +16,7 @@ const supabase = createClient(
 
 const MAX_NEW_JOBS_PER_RUN = 50;
 
-// Only keep jobs in target cities or remote-friendly roles
-const TARGET_LOCATIONS = ['chennai', 'bangalore', 'bengaluru', 'karnataka', 'tamil nadu', 'remote', 'india'];
-
-function isTargetLocation(location: string): boolean {
-  const lower = location.toLowerCase();
-  return TARGET_LOCATIONS.some(loc => lower.includes(loc));
-}
+// isTargetLocation is imported from ./store
 
 async function getExistingUrls(): Promise<Set<string>> {
   const { data, error } = await supabase

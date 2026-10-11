@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, Inbox, Briefcase, ExternalLink,
-  CalendarCheck, BarChart3, Settings, Sparkles, Star, Filter,
+  CalendarCheck, BarChart3, Settings, Sparkles, Star, Filter, GitCompare,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -20,6 +20,7 @@ const NAV: { href: string; label: string; icon: React.ElementType; badge?: Badge
   { href: '/interviews', label: 'Interviews', icon: CalendarCheck, badge: 'interviews' },
   { href: '/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/filtered', label: 'Excluded', icon: Filter, badge: 'filtered' },
+  { href: '/v2-review', label: 'V2 Review', icon: GitCompare },
 ];
 
 export function AppSidebar({ collapsed }: { collapsed: boolean }) {

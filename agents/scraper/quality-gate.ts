@@ -1,10 +1,27 @@
-// Shared deterministic quality gate (parity with cloud WF01 Quality Gate node).
+import fs from 'fs';
+import path from 'path';
+
+// Shared deterministic quality gate.
 // Returns a filter reason if the job should be gated before Gemini, else null.
 const SENIOR = /\b(staff|principal|lead|director|vp|vice president|head|manager)\b/i;
 const SPAM = /(unpaid|commission only|mlm|pyramid)/i;
-const AI_KW = ['ai', 'ml', 'machine learning', 'genai', 'llm', 'nlp', 'computer vision', 'data scientist', 'mlops', 'ai engineer', 'research scientist', 'deep learning', 'generative', 'foundation model', 'data science'];
 const MIN_JD = 300;
-const hasAI = (t: string) => { const l = (t || '').toLowerCase(); return AI_KW.some(k => l.includes(k)); };
+
+function getTargetKeywords(): string[] {
+  try {
+    const p = path.resolve(__dirname, '../resume-generator/base-resume.json');
+    if (fs.existsSync(p)) {
+      const data = JSON.parse(fs.readFileSync(p, 'utf-8'));
+      if (data.target_keywords && Array.isArray(data.target_keywords)) {
+        return data.target_keywords;
+      }
+    }
+  } catch (err) {
+    console.error('[quality-gate] Error reading target keywords from base-resume.json:', err);
+  }
+  // Default fallback keywords (AI/ML)
+  return ['ai', 'ml', 'machine learning', 'genai', 'llm', 'nlp', 'computer vision', 'data scientist', 'mlops', 'ai engineer', 'research scientist', 'deep learning', 'generative', 'foundation model', 'data science'];
+}
 
 /** Largest years-of-experience figure mentioned in the text ("5+" counts as 5.5). */
 function maxYears(t: string): number {
@@ -24,6 +41,17 @@ export function gateReason(role: string, jdText: string): string | null {
   if (maxYears(jdText || '') > 5) return 'requires >5y experience';
   if ((jdText || '').length < MIN_JD) return 'thin description';
   if (SPAM.test(jdText || '') || SPAM.test(role || '')) return 'spam';
-  if (!hasAI(role || '') && !hasAI(jdText || '')) return 'non-target (no AI/ML keywords)';
+
+  const targetKeywords = getTargetKeywords().map(k => k.toLowerCase());
+  const hasTargetKeyword = (t: string) => {
+    const l = (t || '').toLowerCase();
+    // Match either the full keyword or key parts (e.g. "ai" matches "ai engineer")
+    return targetKeywords.some(k => l.includes(k) || k.includes(l));
+  };
+
+  if (!hasTargetKeyword(role || '') && !hasTargetKeyword(jdText || '')) {
+    return 'non-target (no matching target keywords)';
+  }
+
   return null;
 }

@@ -1,0 +1,102 @@
+[
+  {
+    "id": "ai-software-engineer-good",
+    "archetype": "AI Software Engineer",
+    "company": "Fernbridge AI",
+    "role": "AI Software Engineer",
+    "location": "Noida, India",
+    "jd_text": "AI Software Engineer role building backend services for our GenAI product suite. 1-3 years of experience with Python or Node.js, REST APIs, and cloud infrastructure. You will integrate LLM APIs into our platform, build event-driven pipelines, and collaborate closely with the AI research team on new generative features for our core product.",
+    "expected_admitted": true,
+    "note": "Explicit '1-3 years' range, bare onsite India city (no literal 'onsite' word) — should pass cleanly on both gates."
+  },
+  {
+    "id": "backend-engineer-good",
+    "archetype": "Backend Engineer",
+    "company": "Kestrel Data",
+    "role": "Backend Engineer",
+    "location": "Remote",
+    "jd_text": "Backend Engineer for a fully remote team building GenAI-powered data products used across the company. A couple of years of experience with backend systems, APIs, and LLM integration required. You will build and maintain services powering our AI data pipeline used by data scientists, and partner closely with the platform team on reliability as usage grows.",
+    "expected_admitted": true,
+    "note": "Spelled-out 'a couple of years' (~2y) — proves the parser doesn't require literal digits to admit a good-fit job."
+  },
+  {
+    "id": "llm-engineer-good-boundary",
+    "archetype": "LLM Engineer",
+    "company": "Trellis AI",
+    "role": "LLM Engineer",
+    "location": "Gurugram, India",
+    "jd_text": "LLM Engineer role focused on building GenAI-powered internal tools for our data and platform teams. Looking for someone with 5 years of experience in Python and LLM-based application development, comfortable owning services end to end. You will build RAG pipelines, integrate vector databases, evaluate embedding models, and ship new GenAI features across our internal tooling.",
+    "expected_admitted": true,
+    "note": "5 years lands one full band above the candidate's max (mid_4_6 vs. profile max junior_2_4) — sits exactly at the +1 tolerance edge and should still pass, proving the tolerance window isn't so narrow it rejects a strong, slightly-above-entry candidate."
+  },
+  {
+    "id": "applied-ai-architect-unsuitable-experience",
+    "archetype": "Applied AI Architect",
+    "company": "Vertex Systems",
+    "role": "Applied AI Architect",
+    "location": "Bengaluru, India",
+    "jd_text": "Applied AI Architect to own the technical design of our GenAI platform end to end. Ideal candidates have 8+ years of experience building large-scale distributed systems and applied machine learning infrastructure. You will set architecture standards, review designs across teams, and drive our LLM serving strategy company-wide, partnering with research on new model deployments.",
+    "expected_admitted": false,
+    "note": "Title alone has no seniority keyword our regex recognizes ('Architect' isn't in v1's SENIOR list or v2's title hints) — veto must come purely from the explicit '8+ years' in the JD body, not the title."
+  },
+  {
+    "id": "senior-ml-engineer-unsuitable",
+    "archetype": "Senior ML Engineer",
+    "company": "Orbital Minds",
+    "role": "Senior ML Engineer",
+    "location": "Remote",
+    "jd_text": "Senior ML Engineer to lead our GenAI platform's core model infrastructure. You will set technical direction, review designs across teams, and drive our LLM infrastructure strategy company-wide. Strong background in distributed systems and machine learning infrastructure expected, along with 6-9 years of hands-on production ML experience.",
+    "expected_admitted": false,
+    "note": "Control case: explicit 'Senior' title and explicit years both point the same direction — both v1 and v2 should agree this is out of scope."
+  },
+  {
+    "id": "ai-safety-researcher-unsuitable",
+    "archetype": "AI Safety Research",
+    "company": "Solace Robotics",
+    "role": "AI Safety Researcher",
+    "location": "Remote",
+    "jd_text": "AI Safety Researcher to study alignment and robustness failure modes in large generative models. 6+ years of research experience in machine learning, PhD or equivalent research track record required. You will publish findings, design new evaluation methodology, and partner with the policy team on safety guidelines for company-wide model releases.",
+    "expected_admitted": false,
+    "note": "No 'senior/staff/lead' keyword anywhere in the title — this is the case v1's title-only SENIOR regex would silently admit; v2's veto must come purely from the '6+ years... PhD' signal in the JD body."
+  },
+  {
+    "id": "forward-deployed-engineer-unsuitable-both",
+    "archetype": "Forward Deployed Engineer",
+    "company": "Beacon AI",
+    "role": "Forward Deployed Engineer",
+    "location": "New York, NY, USA (Onsite)",
+    "jd_text": "Forward Deployed Engineer to embed with enterprise customers and ship GenAI-powered workflows directly in their environment. 5-8 years of enterprise deployment or client-facing engineering experience required. You will travel on-site to customer offices, customize our LLM platform to their infrastructure, and partner with sales engineering on renewals.",
+    "expected_admitted": false,
+    "note": "Deliberately fails BOTH gates at once (senior years AND US onsite, no India/remote eligibility) — proves the structured log reports each gate's own verdict independently rather than collapsing to a single opaque reason."
+  },
+  {
+    "id": "applied-ai-architect-good-title-but-wrong-location",
+    "archetype": "Applied AI Architect",
+    "company": "Northlight AI",
+    "role": "Applied AI Architect (Associate)",
+    "location": "London, UK (Onsite)",
+    "jd_text": "Associate Applied AI Architect role for someone early in their career, 1-2 years of experience with Python and applied machine learning. You will support senior architects in designing GenAI integrations for enterprise clients, working on LLM prompt design and evaluation harnesses under close mentorship in our London office.",
+    "expected_admitted": false,
+    "note": "Experience is fine (1-2y) — this should be vetoed on location alone (UK onsite, outside India/remote eligibility), proving the location gate acts independently and doesn't get overridden by a good experience match."
+  },
+  {
+    "id": "devops-engineer-out-of-family",
+    "archetype": "Other (role-family isolation control)",
+    "company": "Ironclad Systems",
+    "role": "DevOps Engineer",
+    "location": "Bengaluru, India",
+    "jd_text": "DevOps Engineer to manage our Kubernetes infrastructure and CI/CD pipelines for internal platform teams. 2 years of experience with AWS, Terraform, and container orchestration required. You will own uptime and reliability for our internal services and support engineering teams with deployment tooling and release automation.",
+    "expected_admitted": false,
+    "note": "Experience (2y) and location (Bengaluru, India) are both fine — this should be rejected on role_family alone (devops_infra, outside the candidate's acceptable families), proving that gate acts independently of the other two. v1 happens to already reject this via its own target-keyword check, so this is a control/agreement case, not a new disagreement."
+  },
+  {
+    "id": "ai-software-engineer-good-onsite",
+    "archetype": "AI Software Engineer",
+    "company": "Halcyon AI",
+    "role": "AI Software Engineer I",
+    "location": "Delhi, India",
+    "jd_text": "AI Software Engineer I role building GenAI-powered features for our consumer product. 2 years of experience with Python, REST APIs, and LLM integration. You will work closely with the platform team to ship new AI Engineer-built features, integrate embedding search, and support production incidents for our generative AI stack.",
+    "expected_admitted": true,
+    "note": "Title-appended 'I' (junior-level annotation, not a seniority keyword) plus bare onsite Delhi — should pass cleanly, proving title suffixes like 'I'/'II' don't trip the gate."
+  }
+]
