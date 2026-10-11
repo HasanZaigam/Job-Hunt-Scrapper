@@ -61,6 +61,32 @@ jobs:
           [ "$missing" = "0" ] || { echo "Add the missing secrets in repo Settings -> Secrets and variables -> Actions."; exit 1; }
           echo "All required secrets are present."
 
+      # Fail fast with a specific reason if Supabase can't be reached, instead of
+      # an opaque "TypeError: fetch failed" from inside the agents. Prints only
+      # booleans / HTTP codes — never secret values.
+      - name: Preflight — Supabase reachable
+        run: |
+          url="$SUPABASE_URL"
+          key="$SUPABASE_SERVICE_KEY"
+          case "$url" in
+            https://*.supabase.co) ;;
+            *) echo "::error::SUPABASE_URL must look like https://<project-ref>.supabase.co (no trailing slash, path, or spaces)"; exit 1 ;;
+          esac
+          if printf %s "$url" | grep -q '[[:space:]]'; then echo "::error::SUPABASE_URL contains a space/newline — re-paste it without trailing whitespace"; exit 1; fi
+          if printf %s "$key" | grep -q '[[:space:]]'; then echo "::error::SUPABASE_SERVICE_KEY contains a space/newline — re-paste it without trailing whitespace"; exit 1; fi
+          if [ "$(printf %s "$key" | tr -cd '.' | wc -c)" != "2" ]; then echo "::error::SUPABASE_SERVICE_KEY does not look like a JWT (expected 3 dot-separated parts, starting eyJ...)"; exit 1; fi
+          code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 \
+            "$url/rest/v1/applications?select=id&limit=1" \
+            -H "apikey: $key" -H "Authorization: Bearer $key") || {
+              echo "::error::Cannot connect to Supabase (DNS/connection failed). The project may be PAUSED (restore it in the Supabase dashboard) or SUPABASE_URL points to the wrong project."; exit 1; }
+          echo "Supabase REST responded HTTP $code"
+          case "$code" in
+            200|206) echo "Supabase OK." ;;
+            401|403) echo "::error::Supabase rejected SUPABASE_SERVICE_KEY (HTTP $code). Use the service_role key, not the anon key, and make sure it belongs to this project."; exit 1 ;;
+            404) echo "::error::The 'applications' table was not found — run database/schema.sql (then migrations 001-004) in the Supabase SQL editor."; exit 1 ;;
+            *) echo "::error::Unexpected Supabase response HTTP $code"; exit 1 ;;
+          esac
+
       # 1) Match the unscored backlog first (oldest first; stops itself when the
       #    daily Gemini budget is exhausted, leaving the rest for the next run).
       - name: Match backlog (Gemini rubric + quality gate)
