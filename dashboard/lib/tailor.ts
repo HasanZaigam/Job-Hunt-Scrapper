@@ -60,12 +60,32 @@ Return ONLY valid JSON (no markdown) in exactly this shape:
   "project_order": [<the project names from this list, most-relevant first: ${JSON.stringify(projectNames)}>],
   "cover_letter_paragraphs": [
     "<opening: interest in the {role} at {company} + who the candidate is>",
-    "<current experience paragraph (Cognizant / data-science) tied to the role>",
+    "<current experience paragraph (the candidate's most recent role from the resume) tied to the role>",
     "<projects paragraph highlighting the most relevant work and outcomes>",
     "<why THIS company specifically — reference its product/mission/domain from the JD>",
     "<closing: thank you + call to discuss>"
   ]
 }`;
+}
+
+// Used only when Gemini is unavailable. Built strictly from the base resume so a
+// failed tailoring call can never put someone else's (or invented) history in a
+// cover letter.
+function fallbackParagraphs(base: BaseResume, job: JobContext): string[] {
+  const latest = base.experience[0];
+  const projectNames = base.projects.slice(0, 2).map(p => p.name.split(' — ')[0]);
+  const certs = base.certifications.slice(0, 2).join(' and ');
+  return [
+    `I am writing to express my interest in the ${job.role} role at ${job.company}. I am ${base.name}, and I build LLM-powered applications and the backend systems around them.`,
+    latest
+      ? `In my current role as ${latest.role} at ${latest.company}, ${latest.bullets[0].replace(/^[A-Z]/, c => c.toLowerCase())}`
+      : `I have hands-on experience integrating LLMs into real products.`,
+    projectNames.length
+      ? `My projects include ${projectNames.join(' and ')}${certs ? `, and I hold certifications including ${certs}` : ''}.`
+      : `I am continuing to deepen my skills in LLM integration, RAG, and AI agents.`,
+    `I am drawn to ${job.company} and would welcome the opportunity to bring my AI engineering background to your team.`,
+    `Thank you for your time and consideration. I look forward to the possibility of contributing to ${job.company}.`,
+  ];
 }
 
 export async function tailorForJob(
@@ -91,13 +111,7 @@ export async function tailorForJob(
   const paragraphs =
     parsed?.cover_letter_paragraphs?.length
       ? parsed.cover_letter_paragraphs
-      : [
-          `I am writing to express my strong interest in the ${job.role} role at ${job.company}. As an AI & Data Science graduate with hands-on experience building machine-learning and LLM-based solutions, I am excited to contribute my skills to your team.`,
-          `In my current role at Cognizant and during my data-science internship, I have built and shipped end-to-end ML and enterprise solutions using Python, TensorFlow, and modern AI tooling.`,
-          `My projects — an LLM medical chatbot (90% accuracy), an LSTM stock-price forecaster (86% accuracy), and an assistive LipNet communication tool — reflect my focus on shipping reliable, high-impact results.`,
-          `I am drawn to ${job.company} and would welcome the opportunity to bring my AI/ML background to your work.`,
-          `Thank you for your time and consideration. I look forward to the possibility of contributing to ${job.company}.`,
-        ];
+      : fallbackParagraphs(base, job);
 
   return {
     resume: { headline, summary, projectOrder },

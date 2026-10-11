@@ -9,7 +9,7 @@ export async function GET() {
     return NextResponse.json({
       name: resume.name,
       location: resume.contact.location,
-      target_locations: (resume as any).target_locations || ['Chennai', 'Bengaluru'],
+      target_locations: (resume as any).target_locations || [],
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Failed to load profile' }, { status: 500 });

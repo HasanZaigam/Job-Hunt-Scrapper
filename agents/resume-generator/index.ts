@@ -30,10 +30,8 @@ JD Text: ${application.jd_text}
 Missing skills (do NOT fabricate these, omit if not present): ${JSON.stringify(application.missing_skills ?? [])}
 
 HARD RULES:
-1. TOTAL EXPERIENCE = exactly 2 years. Always present the candidate as having ~2 years of
-   experience, regardless of what the job description asks for. Even if the JD requires 5+
-   years, frame the candidate as a strong 2-year-experience engineer. Never state more or
-   less than 2 years. Keep job durations consistent with a ~2 year total.
+1. EXPERIENCE: state the candidate's real experience exactly as in the profile. Never
+   inflate or deflate years, titles, or dates to fit the job description's requirements.
 2. ATS OPTIMISATION — this resume must pass keyword-based Applicant Tracking Systems:
    - Mirror the EXACT keywords, skills, and tool names from the JD verbatim where the
      candidate genuinely has them (match the JD's spelling/casing, e.g. "PyTorch", "LLMs").
@@ -42,14 +40,13 @@ HARD RULES:
    - Weave the role's top 8-10 keywords across summary, skills, and experience bullets.
    - Start each experience bullet with a strong action verb + a quantified result.
 3. HONESTY: do not invent employers, degrees, or skills the candidate lacks. You may
-   re-frame and re-emphasise real experience, but not fabricate it (the 2-year framing
-   is the one allowed normalisation).
+   re-frame and re-emphasise real experience, but never fabricate it.
 
 Return ONLY valid JSON matching this schema:
 {
   "name": "",
   "contact": { "email": "", "phone": "", "linkedin": "", "github": "", "location": "" },
-  "summary": "3 sentence professional summary stating ~2 years experience, the target role, and top JD keywords",
+  "summary": "3 sentence professional summary (no years-of-experience claim beyond what the profile states), the target role, and top JD keywords",
   "experience": [{ "company": "", "role": "", "duration": "", "bullets": ["action verb + quantified result + JD keyword"] }],
   "skills": { "languages": [], "frameworks": [], "tools": [], "concepts": [] },
   "education": [{ "degree": "", "institution": "", "year": "" }],
@@ -59,7 +56,7 @@ Return ONLY valid JSON matching this schema:
   const text = await generateWithRetry(prompt, {
     tag: 'resume-gen',
     systemInstruction:
-      'You are an expert resume writer for AI/ML engineers. You write ATS-optimised resumes that reliably pass automated keyword screening, always presenting the candidate as having exactly 2 years of experience.',
+      'You are an expert resume writer for AI/ML engineers. You write ATS-optimised resumes that reliably pass automated keyword screening, always staying strictly truthful to the real experience of the candidate.',
     generationConfig: {
       responseMimeType: 'application/json',
       maxOutputTokens: 4096,

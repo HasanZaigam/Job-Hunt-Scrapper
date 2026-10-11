@@ -1,9 +1,10 @@
 import fs from 'fs';
 import path from 'path';
+import { CORE_AI_KEYWORDS, matchesKeywords } from './filters';
 
 // Shared deterministic quality gate.
 // Returns a filter reason if the job should be gated before Gemini, else null.
-const SENIOR = /\b(staff|principal|lead|director|vp|vice president|head|manager)\b/i;
+const SENIOR = /\b(senior|sr|staff|principal|lead|architect|distinguished|director|vp|vice president|head|manager)\b/i;
 const SPAM = /(unpaid|commission only|mlm|pyramid)/i;
 const MIN_JD = 300;
 
@@ -42,14 +43,11 @@ export function gateReason(role: string, jdText: string): string | null {
   if ((jdText || '').length < MIN_JD) return 'thin description';
   if (SPAM.test(jdText || '') || SPAM.test(role || '')) return 'spam';
 
-  const targetKeywords = getTargetKeywords().map(k => k.toLowerCase());
-  const hasTargetKeyword = (t: string) => {
-    const l = (t || '').toLowerCase();
-    // Match either the full keyword or key parts (e.g. "ai" matches "ai engineer")
-    return targetKeywords.some(k => l.includes(k) || k.includes(l));
-  };
-
-  if (!hasTargetKeyword(role || '') && !hasTargetKeyword(jdText || '')) {
+  // Whole-word match on the profile's target keywords plus the core AI/ML terms.
+  // (The old substring check matched "ai" inside "email"/"retail", and its
+  // reversed `k.includes(text)` test passed every job that had an empty title.)
+  const keywords = [...getTargetKeywords(), ...CORE_AI_KEYWORDS];
+  if (!matchesKeywords(role || '', keywords) && !matchesKeywords(jdText || '', keywords)) {
     return 'non-target (no matching target keywords)';
   }
 

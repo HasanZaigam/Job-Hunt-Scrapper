@@ -85,10 +85,16 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 - Run order: MATCH backlog first (oldest jobs first), THEN top-up scrape.
 - Auto-apply (agents/auto-apply/) is NOT running — applying is manual from the
   dashboard. If it is ever revived: max 15 auto-applies per day to avoid spam flagging.
+- Scrape-time filters live in `agents/scraper/filters.ts`: location eligibility
+  (reuses the v2 parser — remote open to India/worldwide or onsite/hybrid India;
+  "Remote - US" etc. rejected) and whole-word title matching. Tests:
+  `npx ts-node agents/scraper/__tests__/filters.test.ts`.
 - Always deduplicate by jd_url; matcher only touches status='scraped' so no job
   is scraped or scored twice.
-- Resume generation: always present exactly 2 years of experience regardless of
-  the JD's ask; ATS-optimise (mirror JD keywords, standard headings, no tables).
+- Resume generation: never fabricate or inflate experience, years, metrics or
+  skills — only reword/reorder facts already in base-resume.json (which must match
+  the candidate's real resume). ATS-optimise (mirror JD keywords the candidate
+  genuinely has, standard headings, no tables).
 - Manual apply queue for non-Greenhouse/Lever companies (Workday, custom portals)
 
 ## Application Status Pipeline

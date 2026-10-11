@@ -11,7 +11,7 @@ export function TopBar({ onToggle }: { onToggle: () => void }) {
   const [q, setQ] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const [locations, setLocations] = useState<string[]>(['Chennai', 'Bengaluru']);
+  const [locations, setLocations] = useState<string[]>([]);
   const [profile, setProfile] = useState<{ name: string; location: string; target_locations?: string[] } | null>(null);
 
   function submit(e: React.FormEvent) {
@@ -92,7 +92,7 @@ export function TopBar({ onToggle }: { onToggle: () => void }) {
               {profile?.name ? profile.name[0].toUpperCase() : 'J'}
             </span>
             <span className="hidden text-sm font-medium text-foreground sm:block">
-              {profile?.name ? profile.name.split(' ')[0] : 'Jagadeesh'}
+              {profile?.name ? profile.name.split(' ')[0] : 'Profile'}
             </span>
             <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
           </button>
