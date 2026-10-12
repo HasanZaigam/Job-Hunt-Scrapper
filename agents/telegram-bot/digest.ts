@@ -13,11 +13,13 @@ import * as dotenv from 'dotenv';
 import path from 'path';
 import fetch from 'node-fetch';
 import { createClient } from '@supabase/supabase-js';
+import { titleRank, FALLBACK_RANK } from '../scraper/search-profile';
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
 
 const MAX_MESSAGE_CHARS = 3500; // Telegram hard limit is 4096; leave headroom
 const MATCHED_LIMIT = 10;
+const MATCHED_POOL = 60; // fetch the best-scoring pool, then order by preferred title
 const FILTERED_LIMIT = 40;
 const FALLBACK_WINDOW_HOURS = 72;
 
@@ -48,13 +50,15 @@ export function isContractLike(role: string): boolean {
 
 export function formatMatchedLine(j: JobRow, rank: number): string {
   const score = j.match_score != null ? `${j.match_score}` : '–';
+  const tr = titleRank(j.role);
+  const tag = tr && tr.rank < FALLBACK_RANK ? ` <i>T${tr.rank}</i>` : '';
   const where = [
     j.location ? `📍 ${esc(j.location)}` : '',
     isContractLike(j.role) ? '🧾 contract/task-based' : '',
     j.jd_url ? `<a href="${attr(j.jd_url)}">Open job</a>` : '',
   ]
     .filter(Boolean).join(' · ');
-  return `${rank}. <b>${score}</b> ${esc(j.company)} — ${esc(j.role)}${where ? `\n    ${where}` : ''}`;
+  return `${rank}. <b>${score}</b>${tag} ${esc(j.company)} — ${esc(j.role)}${where ? `\n    ${where}` : ''}`;
 }
 
 export function formatFilteredLine(j: JobRow): string {
@@ -160,12 +164,20 @@ async function statusCounts(sb: Supabase): Promise<Record<string, number>> {
 
 const JOB_COLS = 'id, company, role, location, match_score, jd_url, match_justification';
 
+/** Preferred title first (T1..T5, then other AI/ML), best score first within each. */
+export function pickTop(rows: JobRow[], limit = MATCHED_LIMIT): JobRow[] {
+  const rankOf = (j: JobRow) => titleRank(j.role)?.rank ?? FALLBACK_RANK + 1;
+  return [...rows]
+    .sort((a, b) => rankOf(a) - rankOf(b) || (b.match_score ?? 0) - (a.match_score ?? 0))
+    .slice(0, limit);
+}
+
 async function fetchNewMatched(sb: Supabase): Promise<{ rows: JobRow[]; tracked: boolean }> {
   // Preferred: only jobs not yet notified (needs migration 005's notified_at).
   const first = await sb
     .from('applications').select(JOB_COLS).eq('status', 'matched')
-    .is('notified_at', null).order('match_score', { ascending: false }).limit(MATCHED_LIMIT);
-  if (!first.error) return { rows: (first.data ?? []) as unknown as JobRow[], tracked: true };
+    .is('notified_at', null).order('match_score', { ascending: false }).limit(MATCHED_POOL);
+  if (!first.error) return { rows: pickTop((first.data ?? []) as unknown as JobRow[]), tracked: true };
 
   if (!/notified_at/i.test(first.error.message)) throw new Error(first.error.message);
 
@@ -174,9 +186,9 @@ async function fetchNewMatched(sb: Supabase): Promise<{ rows: JobRow[]; tracked:
   const since = new Date(Date.now() - FALLBACK_WINDOW_HOURS * 3600 * 1000).toISOString();
   const fb = await sb
     .from('applications').select(JOB_COLS).eq('status', 'matched')
-    .gte('updated_at', since).order('match_score', { ascending: false }).limit(MATCHED_LIMIT);
+    .gte('updated_at', since).order('match_score', { ascending: false }).limit(MATCHED_POOL);
   if (fb.error) throw new Error(fb.error.message);
-  return { rows: (fb.data ?? []) as unknown as JobRow[], tracked: false };
+  return { rows: pickTop((fb.data ?? []) as unknown as JobRow[]), tracked: false };
 }
 
 async function fetchFiltered(sb: Supabase): Promise<JobRow[]> {

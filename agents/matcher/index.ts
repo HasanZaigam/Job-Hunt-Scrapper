@@ -85,7 +85,7 @@ async function main() {
   // fresh scrapes, so nothing starves when the daily Gemini budget runs out.
   const { data: jobs, error } = await supabase
     .from('applications')
-    .select('id, company, role, jd_text, location')
+    .select('id, company, role, jd_text, location, salary_range')
     .eq('status', 'scraped')
     .order('created_at', { ascending: true });
 
@@ -109,7 +109,7 @@ async function main() {
     }
 
     // Deterministic quality gate — drop senior/thin/spam before Gemini.
-    const reason = gateReason(job.role, job.jd_text);
+    const reason = gateReason(job.role, job.jd_text, { company: job.company, salaryRange: job.salary_range });
 
     // v2 hard veto (role family + experience + location). Logged as one structured
     // JSON line per job so every decision is machine-parseable and explainable.

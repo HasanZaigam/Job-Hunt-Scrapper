@@ -89,6 +89,16 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
   (reuses the v2 parser — remote open to India/worldwide or onsite/hybrid India;
   "Remote - US" etc. rejected) and whole-word title matching. Tests:
   `npx ts-node agents/scraper/__tests__/filters.test.ts`.
+- Search preferences live in `agents/scraper/search-profile.ts`: ranked target titles
+  (1 AI Engineer LLM/Agents, 2 Generative AI Developer, 3 AI Automation Engineer,
+  4 LLM Application Developer, 5 Associate AI Python Engineer) and deterministic skips
+  (4+ years, strong DSA, ML research / data scientist / MLOps-heavy / Databricks, pure
+  MERN, fixed US-hour shifts unless pay >= US_HOURS_MIN_MONTHLY_INR). The Telegram
+  digest orders by title rank then score. Tests: `cd agents && npm run test:scraper`.
+- Matcher v2 runs in `live` mode (MATCHER_ENGINE_V2_MODE in the workflow): role-family,
+  experience (hard reject at 4+ years) and location vetoes filter jobs before Gemini.
+- Remote job boards (Remotive, RemoteOK, Himalayas) are scraped first in daily-scrape
+  (`agents/scraper/remote-boards.ts`); their jobs are manual-apply (ats_type='custom').
 - Always deduplicate by jd_url; matcher only touches status='scraped' so no job
   is scraped or scored twice.
 - Resume generation: never fabricate or inflate experience, years, metrics or
@@ -116,7 +126,7 @@ status NOT NULL — all applied to prod). The applications API references the
    cron `30 2 * * 1,3,5` = **Mon/Wed/Fri 08:00 IST**): runs `agents/matcher`
    FIRST (score the unscored backlog oldest-first) then `agents/scraper/
    daily-scrape` (top-up to backlog target 60). Matcher = **Quality Gate**
-   (`agents/scraper/quality-gate.ts`: drop senior/>5y/thin/off-target to
+   (`agents/scraper/quality-gate.ts`: drop senior/4+y/thin/off-target/skip-profile to
    `filtered`) → Gemini **6-dimension rubric** (0–100 each) → `match_score` = weighted
    average: stack_fit .30, evidence .20, seniority .20, mission .15,
    location .10, compensation .05 (`WEIGHTS` in agents/matcher/index.ts) → ≥60 `matched`, <60 `filtered`. Stored in JSONB

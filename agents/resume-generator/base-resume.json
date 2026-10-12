@@ -16,17 +16,19 @@
   ],
   "target_keywords": [
     "AI Engineer",
-    "GenAI",
-    "Software Engineer",
-    "Backend Engineer",
-    "LLMs"
+    "LLM Engineer",
+    "AI Agent Engineer",
+    "Generative AI Developer",
+    "AI Automation Engineer",
+    "LLM Application Developer",
+    "Associate AI Python Engineer"
   ],
   "experience_policy": {
     "acceptable_max_years": 2,
     "ideal_min_years": 1,
     "ideal_max_years": 3,
-    "stretch_max_years": 4,
-    "hard_reject_min_years": 5
+    "stretch_max_years": 3,
+    "hard_reject_min_years": 4
   },
   "acceptable_role_families": [
     "ai_ml_engineer",

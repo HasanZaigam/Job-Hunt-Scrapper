@@ -108,7 +108,7 @@ async function getJson(url: string, label: string): Promise<any | null> {
 
 async function fetchRemotive(): Promise<RemoteJob[]> {
   // Remotive asks for very few requests per day — two searches per run is plenty.
-  const queries = ['ai engineer', 'machine learning'];
+  const queries = ['ai engineer', 'llm', 'generative ai'];
   const out: RemoteJob[] = [];
   for (const q of queries) {
     const data = await getJson(`https://remotive.com/api/remote-jobs?search=${encodeURIComponent(q)}&limit=100`, `remotive "${q}"`);
@@ -128,7 +128,7 @@ async function fetchRemoteOk(): Promise<RemoteJob[]> {
 }
 
 async function fetchHimalayas(): Promise<RemoteJob[]> {
-  const queries = ['ai engineer', 'machine learning engineer', 'llm'];
+  const queries = ['ai engineer', 'llm engineer', 'generative ai developer', 'ai automation', 'associate ai engineer'];
   const out: RemoteJob[] = [];
   for (const q of queries) {
     const data = await getJson(`https://himalayas.app/jobs/api/search?q=${encodeURIComponent(q)}`, `himalayas "${q}"`);
@@ -168,7 +168,7 @@ export async function fetchRemoteJobs(budget: number, existingUrls: Set<string>)
       if (!matchesAiKeywords(j.role)) { stats.title++; continue; }
       if (!isEligibleLocation(j.location)) { stats.region++; continue; }
       if (j.jd_text.length < MIN_JD_TEXT_CHARS) { stats.thin++; continue; }
-      if (gateReason(j.role, j.jd_text)) { stats.gated++; continue; }
+      if (gateReason(j.role, j.jd_text, { company: j.company, salaryRange: j.salary_range })) { stats.gated++; continue; }
       existingUrls.add(j.jd_url);
       collected.push(j);
       stats.kept++;

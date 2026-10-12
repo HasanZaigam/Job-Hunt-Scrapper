@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { esc, formatMatchedLine, formatFilteredLine, chunkLines, isContractLike } from '../digest';
+import { esc, formatMatchedLine, formatFilteredLine, chunkLines, isContractLike, pickTop } from '../digest';
 
 type Test = () => void;
 const tests: Record<string, Test> = {};
@@ -16,7 +16,7 @@ tests['matched line shows score, company, role, location and link'] = () => {
 };
 tests['matched line copes with missing optional fields'] = () => {
   const l = formatMatchedLine({ company: 'Acme', role: 'AI Engineer' }, 3);
-  assert.strictEqual(l, '3. <b>–</b> Acme — AI Engineer');
+  assert.strictEqual(l, '3. <b>–</b> <i>T1</i> Acme — AI Engineer');
 };
 tests['filtered line strips the "Filtered:" prefix and shows the reason'] = () => {
   assert.strictEqual(formatFilteredLine({ company: 'Acme', role: 'Sr AI Eng', match_justification: 'Filtered: senior-only title' }), '• Acme — Sr AI Eng <i>(senior-only title)</i>');
@@ -37,6 +37,21 @@ tests['contract / per-task / hourly postings are flagged, full-time ones are not
     assert.strictEqual(isContractLike(r), false, r);
   }
   assert.ok(formatMatchedLine({ company: 'X', role: 'ML Engineer - Contract', match_score: 80 }, 1).includes('🧾 contract/task-based'));
+};
+
+tests['digest orders by preferred title (T1..T5) first, then score; tags T1..T5'] = () => {
+  const rows = [
+    { company: 'A', role: 'Machine Learning Engineer', match_score: 95 },      // fallback rank
+    { company: 'B', role: 'Associate AI Python Engineer', match_score: 70 },   // T5
+    { company: 'C', role: 'AI Engineer', match_score: 62 },                    // T1
+    { company: 'D', role: 'AI Engineer', match_score: 81 },                    // T1, higher score
+    { company: 'E', role: 'Generative AI Developer', match_score: 90 },        // T2
+  ];
+  assert.deepStrictEqual(pickTop(rows).map(r => r.company), ['D', 'C', 'E', 'B', 'A']);
+  assert.strictEqual(pickTop(rows, 2).length, 2);
+  assert.ok(formatMatchedLine(rows[2], 1).includes('<i>T1</i>'));
+  assert.ok(formatMatchedLine(rows[4], 1).includes('<i>T2</i>'));
+  assert.ok(!formatMatchedLine(rows[0], 1).includes('<i>T'), 'fallback titles get no tag');
 };
 
 export function run() {

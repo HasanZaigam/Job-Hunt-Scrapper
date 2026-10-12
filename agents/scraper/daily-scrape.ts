@@ -64,7 +64,7 @@ async function harvest(
       if (!isTargetLocation(job.location)) continue;
       // Same deterministic gate the matcher applies (senior title, >5y, thin, spam,
       // off-target) — dropping these here keeps the backlog full of jobs worth scoring.
-      const why = gateReason(job.role, job.jd_text);
+      const why = gateReason(job.role, job.jd_text, { company: job.company, salaryRange: job.salary_range });
       if (why) { skipped.set(why, (skipped.get(why) ?? 0) + 1); continue; }
       existingUrls.add(job.jd_url);
       collected.push({ ...job, _ats: b.ats });

@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { CORE_AI_KEYWORDS, matchesKeywords } from './filters';
+import { skipReason } from './search-profile';
 
 // Shared deterministic quality gate.
 // Returns a filter reason if the job should be gated before Gemini, else null.
@@ -28,15 +29,17 @@ function getTargetKeywords(): string[] {
 // opposed to company marketing ("founded 10 years ago", "20 years in business").
 const EXPERIENCE_CONTEXT = /\b(experience|experienced|expertise|exp\b|hands[- ]on|background|track record|proven|working with|work in|professional|industry)\b/i;
 
+/** Experience (in years) a job asks for at or above which it is skipped. */
+export const MAX_YEARS_ALLOWED = 4;
+
 /**
- * Largest years-of-experience REQUIREMENT in the text ("5+" counts as 5.5).
- * Only counts a "N years" figure when experience-related wording appears in the
- * same sentence-sized window around it. The old version took the biggest "N years"
- * anywhere, so company text such as "founded 10 years ago" wrongly rejected jobs.
+ * Years of experience a JD REQUIRES: the highest *minimum* it states ("5+" counts as
+ * 5.5; a range like "3-5 years" asks for 3). Only counts figures that appear next to
+ * experience wording, so company text such as "founded 10 years ago" is ignored.
  */
-export function maxYears(t: string): number {
+export function requiredYears(t: string): number {
   const text = t || '';
-  const re = /(\d+)\s*(\+)?\s*(?:years|yrs)/gi;
+  const re = /(?:(\d+)\s*(?:-|–|to)\s*)?(\d+)\s*(\+)?\s*(?:years?|yrs?)/gi;
   let m: RegExpExecArray | null;
   let mx = 0;
   while ((m = re.exec(text)) !== null) {
@@ -45,18 +48,25 @@ export function maxYears(t: string): number {
     // Stay within the sentence/bullet the figure appears in.
     const window = text.slice(start, end).split(/[.!?\n\r•]/).find(seg => seg.includes(m![0])) ?? '';
     if (!EXPERIENCE_CONTEXT.test(window)) continue;
-    const eff = parseInt(m[1], 10) + (m[2] ? 0.5 : 0);
+    const eff = m[1] ? parseInt(m[1], 10) : parseInt(m[2], 10) + (m[3] ? 0.5 : 0);
     if (eff > mx) mx = eff;
   }
   return mx;
 }
 
+/** Kept for older callers/tests: same as requiredYears. */
+export const maxYears = requiredYears;
+
 /** Returns a filter reason string if the job should be gated, else null. */
-export function gateReason(role: string, jdText: string): string | null {
+export function gateReason(role: string, jdText: string, extra: { company?: string | null; salaryRange?: string | null } = {}): string | null {
   if (SENIOR.test(role || '')) return 'senior-only title';
-  if (maxYears(jdText || '') > 5) return 'requires >5y experience';
+  if (requiredYears(jdText || '') >= MAX_YEARS_ALLOWED) return `requires ${MAX_YEARS_ALLOWED}+ years experience`;
   if ((jdText || '').length < MIN_JD) return 'thin description';
   if (SPAM.test(jdText || '') || SPAM.test(role || '')) return 'spam';
+
+  // Candidate preferences: research / data-scientist / MLOps / Databricks / MERN / strong DSA / fixed US-hours.
+  const skip = skipReason({ role, jdText, company: extra.company, salaryRange: extra.salaryRange });
+  if (skip) return skip;
 
   // Whole-word match on the profile's target keywords plus the core AI/ML terms.
   // (The old substring check matched "ai" inside "email"/"retail", and its
