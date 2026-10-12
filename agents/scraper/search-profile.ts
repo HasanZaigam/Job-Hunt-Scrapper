@@ -77,8 +77,8 @@ export function titleRank(role: string): TitleRank | null {
 
 // --------------------------------------------------------------- skip rules
 
-/** "Clearly worth it" pay for a fixed US-hours shift: ~5x the current ₹30k/month. Tune here. */
-export const US_HOURS_MIN_MONTHLY_INR = 150_000;
+/** "Clearly worth it" pay for a fixed US-hours shift: ₹60,000/month or more (set by the candidate). Tune here. */
+export const US_HOURS_MIN_MONTHLY_INR = 60_000;
 
 // Approximate FX to INR, only used to compare advertised pay with the threshold above.
 const FX_TO_INR: Record<string, number> = { INR: 1, USD: 88, EUR: 95, GBP: 110 };

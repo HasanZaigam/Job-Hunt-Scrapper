@@ -93,7 +93,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
   (1 AI Engineer LLM/Agents, 2 Generative AI Developer, 3 AI Automation Engineer,
   4 LLM Application Developer, 5 Associate AI Python Engineer) and deterministic skips
   (4+ years, strong DSA, ML research / data scientist / MLOps-heavy / Databricks, pure
-  MERN, fixed US-hour shifts unless pay >= US_HOURS_MIN_MONTHLY_INR). The Telegram
+  MERN, fixed US-hour shifts unless advertised pay >= ₹60,000/month = US_HOURS_MIN_MONTHLY_INR). The Telegram
   digest orders by title rank then score. Tests: `cd agents && npm run test:scraper`.
 - Matcher v2 runs in `live` mode (MATCHER_ENGINE_V2_MODE in the workflow): role-family,
   experience (hard reject at 4+ years) and location vetoes filter jobs before Gemini.
@@ -165,7 +165,7 @@ status NOT NULL — all applied to prod). The applications API references the
 - Notion Sync: agents/notion-sync/
 
 ## Orchestration — GitHub Actions (LIVE) — replaced n8n
-Two free scheduled Actions in `.github/workflows/`:
+Free Actions in `.github/workflows/`:
 - **`daily-pipeline.yml`** — the daily scrape+match. Cron `30 2 * * 1,3,5`
   (08:00 IST Mon/Wed/Fri). Runs `agents/matcher` then `agents/scraper/
   daily-scrape` on an ubuntu runner. `workflow_dispatch` allows manual runs from
@@ -175,8 +175,10 @@ Two free scheduled Actions in `.github/workflows/`:
   missing. Match-first order means newly scraped jobs are scored on the NEXT run.
 - **`supabase-keepalive.yml`** — pings the Supabase public REST endpoint every
   2 days (`17 6 */2 * *`) with the PUBLIC anon key so the free-tier DB never
-  auto-pauses (it pauses after 7 days of no queries). Anon key is safe to commit;
-  no secret key is used here.
+  auto-pauses (it pauses after 7 days of no queries). Reads the repo secrets
+  NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY; no service key is used.
+- **`render-deploy.yml`** — triggers a Render deploy via RENDER_DEPLOY_HOOK; skips
+  quietly (notice, not failure) when that secret isn't set.
 
 Public repo ⇒ unlimited free Actions minutes. Edge case: GitHub disables
 scheduled Actions after 60 days of ZERO repo activity — a stray commit resets it.

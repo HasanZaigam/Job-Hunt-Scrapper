@@ -43,8 +43,8 @@ jobs:
           HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
         run: |
           if [ -z "$HOOK" ]; then
-            echo "::error::Missing secret RENDER_DEPLOY_HOOK. Add it in repo Settings -> Secrets and variables -> Actions (copy from Render -> service -> Settings -> Deploy Hook)."
-            exit 1
+            echo "::notice::RENDER_DEPLOY_HOOK is not set — skipping the Render deploy. To enable auto-deploy, add it in repo Settings -> Secrets and variables -> Actions (copy from Render -> service -> Settings -> Deploy Hook)."
+            exit 0
           fi
           code=$(curl -s -o resp.txt -w '%{http_code}' -X POST "$HOOK")
           echo "Render deploy hook responded HTTP $code"

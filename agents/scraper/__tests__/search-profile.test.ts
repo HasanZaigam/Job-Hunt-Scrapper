@@ -75,8 +75,11 @@ tests['skip: pure MERN, but not AI-focused full-stack'] = () => {
 tests['skip: fixed US-hour shifts unless pay is clearly high'] = () => {
   const shift = 'This role works the US night shift (9pm - 6am IST).' + AI + PAD;
   assert.strictEqual(skipReason({ role: 'AI Engineer', jdText: shift }), 'fixed US-hour shift (pay not stated)');
-  assert.strictEqual(skipReason({ role: 'AI Engineer', jdText: shift, salaryRange: '$900/month' }), 'fixed US-hour shift (pay not high enough)');
+  assert.strictEqual(skipReason({ role: 'AI Engineer', jdText: shift, salaryRange: '$500/month' }), 'fixed US-hour shift (pay not high enough)'); // ~₹44k < ₹60k
   assert.strictEqual(skipReason({ role: 'AI Engineer', jdText: shift, salaryRange: '$4,000/month' }), null, 'clearly worth it -> keep');
+  assert.strictEqual(skipReason({ role: 'AI Engineer', jdText: shift, salaryRange: '$800/month' }), null, '~₹70k is above the ₹60k bar');
+  assert.strictEqual(skipReason({ role: 'AI Engineer', jdText: shift, salaryRange: '₹55,000/month' }), 'fixed US-hour shift (pay not high enough)');
+  assert.strictEqual(skipReason({ role: 'AI Engineer', jdText: shift, salaryRange: '₹65,000/month' }), null);
   assert.strictEqual(skipReason({ role: 'AI Engineer', jdText: 'Must overlap with US Pacific hours.' + AI + PAD }), 'fixed US-hour shift (pay not stated)');
   assert.strictEqual(skipReason({ role: 'AI Engineer', jdText: 'Flexible hours; some meetings with the US team.' + AI + PAD }), null, 'soft overlap is fine');
   assert.strictEqual(skipReason({ role: 'AI Engineer', jdText: '9am - 6pm EST shift.' + AI + PAD }), 'fixed US-hour shift (pay not stated)');
@@ -101,7 +104,7 @@ tests['monthlyInr reads common pay formats (lower bound)'] = () => {
   near(monthlyInr('€4,500/month'), 4500 * 95);
   assert.strictEqual(monthlyInr('Upto $500/task'), null);
   assert.strictEqual(monthlyInr('competitive'), null);
-  assert.ok(US_HOURS_MIN_MONTHLY_INR >= 100_000);
+  assert.strictEqual(US_HOURS_MIN_MONTHLY_INR, 60_000);
 };
 
 // ----------------------------------------------------------- gate integration
