@@ -173,10 +173,10 @@ Free Actions in `.github/workflows/`:
   SUPABASE_SERVICE_KEY from **repo Actions secrets** (Settings → Secrets and
   variables → Actions). Has a preflight step that fails loudly if a secret is
   missing. Match-first order means newly scraped jobs are scored on the NEXT run.
-- **`supabase-keepalive.yml`** — pings the Supabase public REST endpoint every
-  2 days (`17 6 */2 * *`) with the PUBLIC anon key so the free-tier DB never
+- **`supabase-keepalive.yml`** — pings the Supabase REST endpoint every
+  2 days (`17 6 */2 * *`) so the free-tier DB never
   auto-pauses (it pauses after 7 days of no queries). Reads the repo secrets
-  NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY; no service key is used.
+  SUPABASE_URL / SUPABASE_SERVICE_KEY (1-row read, nothing written).
 - **`render-deploy.yml`** — triggers a Render deploy via RENDER_DEPLOY_HOOK; skips
   quietly (notice, not failure) when that secret isn't set.
 
