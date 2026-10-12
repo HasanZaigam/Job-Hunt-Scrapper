@@ -7,6 +7,7 @@ import { gateReason } from '../scraper/quality-gate';
 import { evaluateHardVeto } from './v2/hard-veto';
 import type { HardVetoResult } from './v2/types';
 import { buildDecisionLog } from './v2/decision-log';
+import { effectiveVeto } from './veto-policy';
 import { buildV2PersistencePayload, persistV2Result } from './v2/persistence';
 import baseResume from '../resume-generator/base-resume.json';
 
@@ -142,11 +143,12 @@ async function main() {
     }
 
     // LIVE mode: a v2 veto filters the job out before spending any Gemini quota.
-    if (V2_MODE === 'live' && v2?.vetoed) {
+    const veto = V2_MODE === 'live' && v2 ? effectiveVeto(job.role, v2) : null;
+    if (veto) {
       await supabase.from('applications')
-        .update({ status: 'filtered', match_justification: `Filtered (v2): ${v2.reason}` })
+        .update({ status: 'filtered', match_justification: `Filtered (v2): ${veto}` })
         .eq('id', job.id);
-      console.log(`[matcher] v2-vetoed ${job.company} — ${job.role}: ${v2.reason}`);
+      console.log(`[matcher] v2-vetoed ${job.company} — ${job.role}: ${veto}`);
       stats.vetoedV2++;
       continue;
     }

@@ -84,6 +84,7 @@ export const US_HOURS_MIN_MONTHLY_INR = 150_000;
 const FX_TO_INR: Record<string, number> = { INR: 1, USD: 88, EUR: 95, GBP: 110 };
 
 const TITLE_SKIPS: [RegExp, string][] = [
+  [/\b(artist|designer|illustrator|animator|writer|copywriter|editor|translator|content creator|photographer|videographer|annotator|labeler|labeller|rater|evaluator|tutor|trainer)\b/i, 'not an engineering role (creative / AI-training)'],
   [/\bdata\s+scien(tist|ce)/i, 'data scientist role'],
   [/\b(research\s+(scientist|engineer|fellow|intern|associate)|researcher|applied\s+scientist|\bscientist\b|ml\s+research|ai\s+research)\b/i, 'ML research / scientist role'],
   [/\bmlops\b|\bml\s*platform\b|\bmachine\s+learning\s+platform\b|\bmodel\s*ops\b|\bml\s+infrastructure\b/i, 'MLOps role'],

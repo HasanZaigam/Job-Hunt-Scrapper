@@ -82,6 +82,14 @@ tests['skip: fixed US-hour shifts unless pay is clearly high'] = () => {
   assert.strictEqual(skipReason({ role: 'AI Engineer', jdText: '9am - 6pm EST shift.' + AI + PAD }), 'fixed US-hour shift (pay not stated)');
 };
 
+tests['skip: creative / AI-training titles are not engineering roles'] = () => {
+  for (const t of ['Generative AI Artist Fashion - Freelance', 'AI Trainer Image QA Evaluator', 'AI Content Writer', 'AI Designer', 'Data Annotator']) {
+    assert.strictEqual(skipReason({ role: t, jdText: AI + PAD }), 'not an engineering role (creative / AI-training)', t);
+  }
+  assert.strictEqual(skipReason({ role: 'Generative AI Engineer', jdText: AI + PAD }), null);
+  assert.strictEqual(skipReason({ role: 'Prompt Engineer', jdText: AI + PAD }), null);
+};
+
 // ------------------------------------------------------------------- salary
 tests['monthlyInr reads common pay formats (lower bound)'] = () => {
   const near = (v: number | null, expected: number) => assert.ok(v !== null && Math.abs(v - expected) / expected < 0.02, `${v} vs ${expected}`);

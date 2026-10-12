@@ -10,6 +10,7 @@ import path from 'path';
 import { createClient } from '@supabase/supabase-js';
 import { gateReason } from '../scraper/quality-gate';
 import { evaluateHardVeto } from './v2/hard-veto';
+import { effectiveVeto } from './veto-policy';
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
 
@@ -34,7 +35,8 @@ async function main() {
     let reason = gateReason(job.role, text, { company: job.company, salaryRange: job.salary_range });
     if (!reason) {
       const v2 = evaluateHardVeto(job.role, text, job.location || '');
-      if (v2.vetoed) reason = `v2: ${v2.reason}`;
+      const veto = effectiveVeto(job.role, v2);
+      if (veto) reason = `v2: ${veto}`;
     }
     if (!reason) { kept++; continue; }
 
