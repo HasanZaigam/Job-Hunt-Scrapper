@@ -269,6 +269,29 @@ tests['BUGFIX: a BODY-only (non-title) engineering pick can still be overridden 
   assert.strictEqual(result.family, 'non_engineering', 'a body-only AI-vocab pick with no title-based engineering signal should still be overridable');
 };
 
+tests['TITLE: "AI Sales Engineer" is non_engineering and rejected even with heavy LLM/RAG vocabulary in the body'] = () => {
+  const result = evaluateRoleFamilyGate(
+    'AI Sales Engineer, (EMEA)',
+    'Join our engineering team. You will demo our LLM, RAG and generative AI platform to prospects, partnering with the account executive on deals.',
+    PROFILE
+  );
+  assert.strictEqual(result.family, 'non_engineering');
+  assert.strictEqual(result.passed, false);
+};
+
+tests['TITLE: "AI Solutions Engineer" (a target title) is NOT caught by the sales-title rule'] = () => {
+  const result = evaluateRoleFamilyGate('AI Solutions Engineer', 'Build LLM integrations and RAG pipelines for customers.', PROFILE);
+  assert.notStrictEqual(result.family, 'non_engineering');
+};
+
+tests['KEYWORDS: "AI agent engineer" and "Agentic AI Engineer" classify as acceptable families'] = () => {
+  for (const title of ['AI agent engineer', 'Agentic AI Engineer', 'AI Automation Engineer']) {
+    const result = evaluateRoleFamilyGate(title, 'Build agents with tool calling.', PROFILE);
+    assert.strictEqual(result.passed, true, `${title} -> ${result.family}`);
+    assert.notStrictEqual(result.family, 'unknown', title);
+  }
+};
+
 export function run(): { name: string; passed: boolean; error?: string }[] {
   return Object.entries(tests).map(([name, fn]) => {
     try {

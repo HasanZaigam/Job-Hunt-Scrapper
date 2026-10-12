@@ -1,10 +1,5 @@
 import fetch from 'node-fetch';
-
-const AI_KEYWORDS = [
-  'AI', 'ML', 'Machine Learning', 'GenAI', 'LLM', 'NLP',
-  'Computer Vision', 'Data Scientist', 'MLOps', 'AI Engineer',
-  'Research Scientist', 'Deep Learning', 'Generative', 'Foundation Model'
-];
+import { matchesAiKeywords } from './filters';
 
 export interface JobListing {
   company: string;
@@ -31,11 +26,6 @@ function stripHtml(html: string): string {
     .replace(/&#\d+;/g, '')
     .replace(/\s{2,}/g, ' ')
     .trim();
-}
-
-function matchesAiKeywords(title: string): boolean {
-  const lower = title.toLowerCase();
-  return AI_KEYWORDS.some(k => lower.includes(k.toLowerCase()));
 }
 
 export async function fetchGreenhouseJobs(

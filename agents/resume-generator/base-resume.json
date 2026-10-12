@@ -1,10 +1,10 @@
 {
   "name": "Hasan Zaigam",
   "contact": {
-    "email": "",
-    "phone": "+91 9616725062",
-    "linkedin": "LinkedIn",
-    "github": "GitHub",
+    "email": "syedhasanzaigam50890@gmail.com",
+    "phone": "+91 96167 25062",
+    "linkedin": "https://linkedin.com/in/hasan-zaigam",
+    "github": "https://github.com/HasanZaigam",
     "location": "Noida, India"
   },
   "target_locations": [
@@ -16,54 +16,70 @@
   ],
   "target_keywords": [
     "AI Engineer",
-    "GenAI",
-    "Software Engineer",
-    "Backend Engineer",
-    "LLMs"
+    "LLM Engineer",
+    "AI Agent Engineer",
+    "Generative AI Developer",
+    "AI Automation Engineer",
+    "LLM Application Developer",
+    "Associate AI Python Engineer"
   ],
   "experience_policy": {
     "acceptable_max_years": 2,
     "ideal_min_years": 1,
     "ideal_max_years": 3,
-    "stretch_max_years": 4,
-    "hard_reject_min_years": 5
+    "stretch_max_years": 3,
+    "hard_reject_min_years": 4
   },
-  "acceptable_role_families": ["ai_ml_engineer", "genai_applied", "backend_engineer"],
+  "acceptable_role_families": [
+    "ai_ml_engineer",
+    "genai_applied",
+    "backend_engineer"
+  ],
   "location_eligibility": {
-    "countries": ["IN"],
+    "countries": [
+      "IN"
+    ],
     "remote_ok_from_anywhere": true,
-    "onsite_cities": ["Noida", "Delhi", "New Delhi", "Gurgaon", "Gurugram", "Bengaluru", "Bangalore"]
+    "onsite_cities": [
+      "Noida",
+      "Delhi",
+      "New Delhi",
+      "Gurgaon",
+      "Gurugram",
+      "Bengaluru",
+      "Bangalore"
+    ]
   },
-  "summary": "Backend-focused Software Engineer with production experience building scalable microservices, REST APIs, and event-driven systems, with hands-on expertise integrating LLMs and AI capabilities into full-stack products. Proven track record improving throughput, latency, and reliability for platforms serving 10,000+ concurrent users.",
+  "summary": "AI engineer building LLM-powered production systems: RAG pipelines, AI agents, voice automation, and LLM integration, on a strong backend foundation in Python, FastAPI, and Node.js. Have shipped AI features into live products serving 10,000+ concurrent users, owning the full path from prompt design and orchestration through API and deployment. Anthropic-certified in the Claude API and MCP.",
   "experience": [
     {
       "company": "Applore Technologies",
-      "role": "Software Engineer",
+      "role": "AI Engineer",
       "duration": "Jan 2026 – Present",
       "bullets": [
-        "Designed and deployed FastAPI microservices powering AI-driven personalization, recommendation, and metadata services for a production OTT platform, improving content discovery by 40%.",
-        "Built scalable backend workflows using Redis, asynchronous task queues, and event-driven processing, improving transactional throughput by 10x.",
-        "Optimized cloud infrastructure using AWS S3 and Cloudflare, reducing content delivery latency by 3x while supporting 10,000+ concurrent users across Web, Mobile, and Smart TV platforms."
+        "Design and deploy FastAPI microservices powering AI-driven recommendation, personalization, and LLM-based metadata enrichment for a production OTT platform across Web, Mobile, and Smart TV.",
+        "Build event-driven backend workflows using Redis and asynchronous task queues for high-volume transactional processing.",
+        "Run cloud delivery on AWS S3 and Cloudflare supporting 10,000+ concurrent users, tuning for low-latency streaming."
       ]
     },
     {
       "company": "Applore Technologies",
-      "role": "Prompt Engineer Intern",
+      "role": "AI / Prompt Engineer (Intern)",
       "duration": "Jul 2025 – Sep 2025",
       "bullets": [
-        "Developed AI-powered voice automation workflows using VAPI, backend APIs, and LLM prompts for CallerDigital, reducing manual call handling by 60%.",
-        "Built prompt orchestration workflows that automated 5+ internal business processes, improving operational efficiency by 40%.",
-        "Collaborated with engineering teams to integrate AI services into production applications, improving response accuracy by 35%."
+        "Built AI voice-automation workflows for CallerDigital using VAPI, LLM prompt orchestration, and backend APIs, automating internal call-handling processes end to end.",
+        "Developed prompt-orchestration pipelines that automated 5+ internal business processes.",
+        "Integrated AI services into production applications alongside the engineering team."
       ]
     },
     {
-      "company": "OperateCrypto",
-      "role": "Software Developer Intern",
+      "company": "OperateCrypto (Remote, Texas, US)",
+      "role": "Software Developer (Intern)",
       "duration": "Jan 2025 – Jul 2025",
       "bullets": [
-        "Developed an internal AI chatbot using Node.js, Express, MongoDB, React, and Gemini API, reducing customer support resolution time by 50%.",
-        "Optimized backend application performance, reducing platform load time by 30% and increasing user session duration by 20%.",
-        "Integrated AI capabilities into an existing MERN application while collaborating with cross-functional teams to improve customer support workflows."
+        "Built an internal AI chatbot with Node.js, Express, MongoDB, React, and the Gemini API to support the customer-support workflow.",
+        "Improved backend performance across an existing MERN application.",
+        "Integrated AI capabilities into the product with a cross-functional team."
       ]
     }
   ],
@@ -80,10 +96,12 @@
       "Express.js",
       "Django",
       "Next.js",
-      "React.js"
+      "React.js",
+      "Tailwind CSS",
+      "LangChain"
     ],
     "tools": [
-      "AWS",
+      "AWS (S3)",
       "Docker",
       "Cloudflare",
       "Git",
@@ -97,13 +115,13 @@
     "concepts": [
       "REST APIs",
       "Microservices",
+      "Event-driven systems",
       "LLM Integration",
       "RAG",
-      "LangChain",
-      "Gemini API",
-      "Prompt Engineering",
+      "Prompt Engineering & Orchestration",
       "AI Agents",
-      "MCP"
+      "MCP",
+      "Gemini API"
     ]
   },
   "education": [
@@ -118,21 +136,25 @@
   "projects": [
     {
       "name": "Jinvani — AI-Powered OTT Platform",
-      "description": "Architected and developed a production-scale OTT platform with scalable backend services, AI-powered recommendation engine, and LLM-based metadata enrichment supporting Web, Mobile, and Smart TV applications. Built high-performance backend services using FastAPI, integrated with Cloudflare for low-latency video delivery, improving platform scalability and streaming performance. Designed and implemented secure authentication and subscription infrastructure including Email OTP, Google OAuth, Razorpay payment integration, and multi-profile user management.",
+      "description": "Architected production-scale backend services with an AI-powered recommendation engine and LLM-based metadata enrichment across Web, Mobile, and Smart TV. Built high-performance FastAPI services integrated with Cloudflare for low-latency video delivery. Implemented secure authentication and subscriptions: Email OTP, Google OAuth, Razorpay payments, and multi-profile management.",
       "tech": [
         "FastAPI",
         "Cloudflare",
         "Razorpay",
+        "Google OAuth",
         "LLM"
       ]
     },
     {
-      "name": "Eatro — Multi-Tenant Restaurant SaaS Platform (US/UK Clients)",
-      "description": "Led backend development of a multi-tenant SaaS platform supporting 50+ restaurants with role-based access control, menu management, and centralized order processing. Engineered the complete order lifecycle including cart, checkout, driver assignment, real-time order tracking, ETA notifications, and loyalty system, reducing order processing time by 2x. Integrated 10+ third-party APIs including Stripe, Google Maps, Careem, Talabat, Deliveroo, WhatsApp Business API, and multiple POS systems, reducing manual operations by 60%.",
+      "name": "Eatro — Multi-Tenant Restaurant SaaS (US/UK clients)",
+      "description": "Led backend for a multi-tenant platform supporting 50+ restaurants with role-based access control, menu management, and centralized order processing. Engineered the full order lifecycle: cart, checkout, driver assignment, real-time tracking, ETA notifications, and loyalty. Integrated 10+ third-party APIs including Stripe, Google Maps, Careem, Talabat, Deliveroo, WhatsApp Business API, and POS systems.",
       "tech": [
         "Stripe",
         "Google Maps",
-        "WhatsApp Business API"
+        "WhatsApp Business API",
+        "Deliveroo",
+        "Talabat",
+        "Careem"
       ]
     }
   ],

@@ -2,34 +2,19 @@ import { createClient } from '@supabase/supabase-js';
 import { fetchGreenhouseJobs, type JobListing } from './greenhouse';
 import { fetchLeverJobs } from './lever';
 import { fetchAshbyJobs } from './ashby';
-import fs from 'fs';
-import path from 'path';
+import { isEligibleLocation } from './filters';
 
 export type Ats = 'greenhouse' | 'lever' | 'ashby';
-
-export function getTargetLocations(): string[] {
-  try {
-    const p = path.resolve(__dirname, '../resume-generator/base-resume.json');
-    if (fs.existsSync(p)) {
-      const data = JSON.parse(fs.readFileSync(p, 'utf-8'));
-      if (data.target_locations && Array.isArray(data.target_locations)) {
-        return data.target_locations.map((loc: string) => loc.toLowerCase());
-      }
-    }
-  } catch (err) {
-    console.error('[store] Error loading target locations from base-resume.json:', err);
-  }
-  return ['chennai', 'bangalore', 'bengaluru', 'karnataka', 'tamil nadu', 'remote', 'india'];
-}
 
 export function supabaseClient() {
   return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_KEY!);
 }
 
+// Eligible = remote open to India/worldwide, or onsite/hybrid in India. Delegates
+// to the shared v2-based parser (see ./filters) so "Remote - US" and
+// "Indianapolis" are no longer treated as targets.
 export function isTargetLocation(location: string): boolean {
-  const lower = (location ?? '').toLowerCase();
-  const targets = getTargetLocations();
-  return targets.some(loc => lower.includes(loc));
+  return isEligibleLocation(location);
 }
 
 export async function getExistingUrls(supabase: ReturnType<typeof supabaseClient>): Promise<Set<string>> {
@@ -81,6 +66,41 @@ export async function insertJobs(
     .select('id');
   if (error) {
     console.error('[store] insert error:', error.message);
+    return 0;
+  }
+  return data?.length ?? 0;
+}
+
+export interface ManualJob {
+  company: string;
+  role: string;
+  jd_url: string;
+  jd_text: string;
+  location: string;
+  salary_range: string | null;
+}
+
+/**
+ * Insert jobs that have no ATS apply API (remote boards, Indeed-style): stored as
+ * ats_type='custom' + is_manual_required=true so they land in the manual-apply
+ * queue. Ignore-duplicate upsert on jd_url, same as insertJobs.
+ */
+export async function insertManualJobs(
+  supabase: ReturnType<typeof supabaseClient>,
+  jobs: ManualJob[]
+): Promise<number> {
+  if (jobs.length === 0) return 0;
+  const rows = jobs.map(j => ({
+    company: j.company, role: j.role, jd_url: j.jd_url, jd_text: j.jd_text,
+    location: j.location, salary_range: j.salary_range,
+    ats_type: 'custom', is_manual_required: true, status: 'scraped',
+  }));
+  const { data, error } = await supabase
+    .from('applications')
+    .upsert(rows, { onConflict: 'jd_url', ignoreDuplicates: true })
+    .select('id');
+  if (error) {
+    console.error('[store] manual insert error:', error.message);
     return 0;
   }
   return data?.length ?? 0;

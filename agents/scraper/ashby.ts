@@ -1,15 +1,28 @@
 import fetch from 'node-fetch';
 import { MIN_JD_TEXT_CHARS, type JobListing } from './greenhouse';
+import { matchesAiKeywords } from './filters';
 
-const AI_KEYWORDS = [
-  'AI', 'ML', 'Machine Learning', 'GenAI', 'LLM', 'NLP',
-  'Computer Vision', 'Data Scientist', 'MLOps', 'AI Engineer',
-  'Research Scientist', 'Deep Learning', 'Generative', 'Foundation Model'
-];
+/**
+ * Build a location string that keeps the region. Ashby marks remote jobs with
+ * isRemote / workplaceType; collapsing those to a bare "Remote" (as this used to)
+ * hid "US only"-style restrictions, so a US-only role looked open worldwide.
+ */
+export function ashbyLocation(job: any): string {
+  const postal = job?.address?.postalAddress ?? {};
+  const places = [
+    job?.location ?? postal.addressLocality,
+    postal.addressCountry,
+    ...(Array.isArray(job?.secondaryLocations) ? job.secondaryLocations.map((s: any) => s?.location) : []),
+  ].filter((p: any): p is string => typeof p === 'string' && p.trim() !== '');
+  const unique = [...new Set(places.map(p => p.trim()))];
+  const base = unique.join('; ');
 
-function matchesAiKeywords(title: string): boolean {
-  const lower = title.toLowerCase();
-  return AI_KEYWORDS.some(k => lower.includes(k.toLowerCase()));
+  const workplace = String(job?.workplaceType ?? '').toLowerCase();
+  const isRemote = job?.isRemote === true || workplace === 'remote';
+  const isHybrid = workplace === 'hybrid';
+  if (isRemote) return base ? (/remote/i.test(base) ? base : `Remote - ${base}`) : 'Remote';
+  if (isHybrid) return base ? `Hybrid - ${base}` : 'Hybrid';
+  return base || 'Unknown';
 }
 
 export async function fetchAshbyJobs(
@@ -43,10 +56,7 @@ export async function fetchAshbyJobs(
 
     const jdText = job.descriptionPlain ?? job.descriptionHtml ?? '';
     if (jdText.length < MIN_JD_TEXT_CHARS) continue; // skip thin/un-tailorable JDs
-    const location =
-      job.isRemote
-        ? 'Remote'
-        : job.location ?? job.address?.postalAddress?.addressLocality ?? 'Unknown';
+    const location = ashbyLocation(job);
 
     results.push({
       company: companyName,

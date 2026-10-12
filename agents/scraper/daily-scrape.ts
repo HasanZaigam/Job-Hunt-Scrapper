@@ -3,8 +3,10 @@ import path from 'path';
 import { discoverNewJobs } from './apify-search';
 import {
   supabaseClient, getExistingUrls, backlogCount, isTargetLocation,
-  fetchBoard, insertJobs, prettyName, type Ats, type PendingJob,
+  fetchBoard, insertJobs, insertManualJobs, prettyName, type Ats, type PendingJob,
 } from './store';
+import { gateReason } from './quality-gate';
+import { fetchRemoteJobs } from './remote-boards';
 import companyList from './company-list.json';
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
@@ -46,6 +48,7 @@ async function harvest(
   label: string
 ): Promise<PendingJob[]> {
   const collected: PendingJob[] = [];
+  const skipped = new Map<string, number>();
   for (const b of boards) {
     if (collected.length >= budget) break;
     let jobs;
@@ -59,9 +62,17 @@ async function harvest(
       if (collected.length >= budget) break;
       if (existingUrls.has(job.jd_url)) continue;
       if (!isTargetLocation(job.location)) continue;
+      // Same deterministic gate the matcher applies (senior title, >5y, thin, spam,
+      // off-target) — dropping these here keeps the backlog full of jobs worth scoring.
+      const why = gateReason(job.role, job.jd_text, { company: job.company, salaryRange: job.salary_range });
+      if (why) { skipped.set(why, (skipped.get(why) ?? 0) + 1); continue; }
       existingUrls.add(job.jd_url);
       collected.push({ ...job, _ats: b.ats });
     }
+  }
+  if (skipped.size) {
+    const summary = [...skipped].map(([r, n]) => `${r}: ${n}`).join(', ');
+    console.log(`[daily-scrape] ${label}: skipped before insert — ${summary}`);
   }
   return collected;
 }
@@ -76,27 +87,38 @@ async function main() {
     return;
   }
 
-  // Split the day's intake evenly between the curated list and Apify discovery.
-  const halfList = Math.ceil(room / 2);
-  const halfApify = room - halfList;
-  console.log(`[daily-scrape] Room for ${room} new jobs — ~${halfList} from list, ~${halfApify} from Apify.`);
-
   const existingUrls = await getExistingUrls(supabase);
 
-  // Static list first (free, reliable), then Apify for the remainder.
-  const fromList = await harvest(staticBoards(), halfList, existingUrls, 'list');
+  // 1) Remote boards first — fast, free, and the best fit for a remote-first search.
+  //    They take up to ~60% of the room; the rest is split between the curated list
+  //    and Apify discovery.
+  const remoteBudget = Math.ceil(room * 0.6);
+  const fromRemote = await fetchRemoteJobs(remoteBudget, existingUrls);
+  console.log(`[daily-scrape] Collected ${fromRemote.length} from remote boards.`);
+
+  const room2 = room - fromRemote.length;
+  const halfList = Math.ceil(room2 / 2);
+  console.log(`[daily-scrape] Room left ${room2} — ~${halfList} from curated list, rest from Apify.`);
+
+  // 2) Curated company list (free, reliable), then 3) Apify for the remainder.
+  const fromList = room2 > 0 ? await harvest(staticBoards(), halfList, existingUrls, 'list') : [];
   console.log(`[daily-scrape] Collected ${fromList.length} from curated list.`);
 
   let fromApify: PendingJob[] = [];
-  const apifyBudget = room - fromList.length; // take leftover room too if list fell short
-  if (apifyBudget > 0) {
+  const apifyBudget = room2 - fromList.length; // take leftover room too if list fell short
+  if (process.env.SKIP_APIFY === 'true') {
+    console.log('[daily-scrape] SKIP_APIFY=true — skipping Apify discovery.');
+  } else if (apifyBudget > 0) {
     const boards = await discoveredBoards();
     console.log(`[daily-scrape] ${boards.length} boards discovered via Apify.`);
     fromApify = await harvest(boards, apifyBudget, existingUrls, 'apify');
     console.log(`[daily-scrape] Collected ${fromApify.length} from Apify discovery.`);
   }
 
-  const inserted = await insertJobs(supabase, [...fromList, ...fromApify]);
+  const toInsert = [...fromList, ...fromApify];
+  for (const j of fromRemote) console.log(`[daily-scrape] + ${j.company} — ${j.role} [${j.location}] (${j.source})`);
+  for (const j of toInsert) console.log(`[daily-scrape] + ${j.company} — ${j.role} [${j.location}]`);
+  const inserted = (await insertManualJobs(supabase, fromRemote)) + (await insertJobs(supabase, toInsert));
   console.log(`[daily-scrape] Done. ${inserted} new jobs inserted (backlog now ~${backlog + inserted}).`);
   // Note: Indeed is intentionally NOT part of the daily run — it's a paid source
   // ($0.006/listing) run on a lighter cadence via Workflow 05 (agents/scraper/

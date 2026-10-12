@@ -1,16 +1,6 @@
 import fetch from 'node-fetch';
 import { MIN_JD_TEXT_CHARS, type JobListing } from './greenhouse';
-
-const AI_KEYWORDS = [
-  'AI', 'ML', 'Machine Learning', 'GenAI', 'LLM', 'NLP',
-  'Computer Vision', 'Data Scientist', 'MLOps', 'AI Engineer',
-  'Research Scientist', 'Deep Learning', 'Generative', 'Foundation Model'
-];
-
-function matchesAiKeywords(title: string): boolean {
-  const lower = title.toLowerCase();
-  return AI_KEYWORDS.some(k => lower.includes(k.toLowerCase()));
-}
+import { matchesAiKeywords } from './filters';
 
 function extractText(lists: any[]): string {
   if (!Array.isArray(lists)) return '';
