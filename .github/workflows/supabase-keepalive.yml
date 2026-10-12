@@ -24,16 +24,16 @@ jobs:
       # Same repo secrets the daily pipeline already uses (masked in logs; only the
       # scheduled run on main can read them). One read of one row — nothing is written.
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_ANON: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
     steps:
       - name: Ping Supabase REST (resets the 7-day pause timer)
         run: |
-          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON" ]; then
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_KEY" ]; then
             echo "::error::Add repo secrets SUPABASE_URL and SUPABASE_SERVICE_KEY (Settings -> Secrets and variables -> Actions)."; exit 1
           fi
           code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 \
-            -H "apikey: $SUPABASE_ANON" \
-            -H "Authorization: Bearer $SUPABASE_ANON" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY" \
             "$SUPABASE_URL/rest/v1/applications?select=id&limit=1") || { echo "::error::Cannot reach Supabase (project paused or wrong URL)"; exit 1; }
           echo "Supabase responded with HTTP $code"
           # 200 (rows or empty under RLS) both mean the query reached Postgres = DB is awake.
