@@ -29,6 +29,11 @@ on:
         description: 'Skip the slow Apify discovery (quick test: curated list only)'
         type: boolean
         default: false
+      regate:
+        description: 'Re-check the already-matched queue against the current rules'
+        type: choice
+        options: ['off', 'dry-run', 'apply']
+        default: 'off'
       telegram_filtered:
         description: 'Also list recently filtered-out jobs in the Telegram message'
         type: boolean
@@ -108,6 +113,15 @@ jobs:
             5*) echo "::error::Supabase still returning HTTP $code after ~4 minutes — the project may still be restoring; check its status in the Supabase dashboard and re-run."; exit 1 ;;
             *) echo "::error::Unexpected Supabase response HTTP $code"; exit 1 ;;
           esac
+
+      # Optional (manual runs): list — or with 'apply', filter out — already-matched jobs
+      # that the current rules would reject. Dry run changes nothing.
+      - name: Re-check matched queue (${{ inputs.regate }})
+        if: ${{ inputs.regate == 'dry-run' || inputs.regate == 'apply' }}
+        continue-on-error: true
+        env:
+          REGATE_APPLY: ${{ inputs.regate == 'apply' }}
+        run: npx ts-node agents/matcher/regate.ts
 
       # 1) Match the unscored backlog first (oldest first; stops itself when the
       #    daily Gemini budget is exhausted, leaving the rest for the next run).
