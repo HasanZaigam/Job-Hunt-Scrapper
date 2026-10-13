@@ -51,23 +51,51 @@ function parseAshbyUrl(url: string): { ats_id: string; job_url: string } | null 
   return { ats_id: m[1], job_url: url };
 }
 
+/** Retry a flaky call (network reset, 429, 5xx). Throws the last error after `attempts`. */
+export async function withRetry<T>(
+  fn: () => Promise<T>,
+  attempts = 3,
+  baseDelayMs = 3000,
+  sleep: (ms: number) => Promise<void> = ms => new Promise(r => setTimeout(r, ms))
+): Promise<T> {
+  let last: unknown;
+  for (let i = 1; i <= attempts; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      last = err;
+      if (i < attempts) {
+        console.warn(`[apify] attempt ${i}/${attempts} failed (${(err as Error)?.message ?? err}); retrying`);
+        await sleep(baseDelayMs * i);
+      }
+    }
+  }
+  throw last;
+}
+
+class RetryableHttpError extends Error {}
+
 async function runApifyActor(query: string): Promise<string[]> {
   // run-sync-get-dataset-items blocks until the run finishes and returns the
   // dataset directly — simpler and more reliable than creating a run + polling.
-  const res = await fetch(
-    `https://api.apify.com/v2/acts/${ACTOR_ID}/run-sync-get-dataset-items?token=${APIFY_API_TOKEN}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        // `resultsPerPage` is NOT a valid field for this actor and was silently
-        // ignored, capping every query at a single page (~10 results). Each page
-        // is ~10 results, so maxPagesPerQuery: 3 yields ~30 candidate URLs/query.
-        queries: query,
-        maxPagesPerQuery: 3,
-      }),
-    }
-  );
+  const res = await withRetry(async () => {
+    const r = await fetch(
+      `https://api.apify.com/v2/acts/${ACTOR_ID}/run-sync-get-dataset-items?token=${APIFY_API_TOKEN}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          // `resultsPerPage` is NOT a valid field for this actor and was silently
+          // ignored, capping every query at a single page (~10 results). Each page
+          // is ~10 results, so maxPagesPerQuery: 3 yields ~30 candidate URLs/query.
+          queries: query,
+          maxPagesPerQuery: 3,
+        }),
+      }
+    );
+    if (r.status === 429 || r.status >= 500) throw new RetryableHttpError(`HTTP ${r.status}`);
+    return r;
+  });
 
   if (!res.ok) {
     console.warn(`[apify] Actor run failed: ${res.status}`);
@@ -102,7 +130,13 @@ export async function discoverNewJobs(dryRun = false): Promise<DiscoveredJob[]> 
 
   for (const query of queries) {
     console.log(`[apify] querying: ${query}`);
-    const urls = await runApifyActor(query);
+    let urls: string[] = [];
+    try {
+      urls = await runApifyActor(query);
+    } catch (err) {
+      // One flaky query must not throw away the rest of the run.
+      console.warn(`[apify] query failed after retries, skipping it: ${(err as Error)?.message ?? err}`);
+    }
 
     for (const url of urls) {
       if (seen.has(url)) continue;

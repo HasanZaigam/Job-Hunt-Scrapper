@@ -109,7 +109,13 @@ async function main() {
   if (process.env.SKIP_APIFY === 'true') {
     console.log('[daily-scrape] SKIP_APIFY=true — skipping Apify discovery.');
   } else if (apifyBudget > 0) {
-    const boards = await discoveredBoards();
+    let boards: Board[] = [];
+    try {
+      boards = await discoveredBoards();
+    } catch (err) {
+      // Apify is a bonus source: if it is down, still insert what the list/remote boards found.
+      console.warn('[daily-scrape] Apify discovery failed, continuing without it:', err);
+    }
     console.log(`[daily-scrape] ${boards.length} boards discovered via Apify.`);
     fromApify = await harvest(boards, apifyBudget, existingUrls, 'apify');
     console.log(`[daily-scrape] Collected ${fromApify.length} from Apify discovery.`);
