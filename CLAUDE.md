@@ -163,6 +163,13 @@ status NOT NULL — all applied to prod). The applications API references the
 - Email Monitor: agents/email-monitor/
 - Telegram: agents/telegram-bot/
 - Notion Sync: agents/notion-sync/
+- LinkedIn growth (DRAFT ONLY): agents/linkedin/ — weekly post drafts, per-job connection
+  note + follow-up, weekly scorecard vs `agents/linkedin/goal.json`. Output goes to
+  Telegram; the owner posts/sends by hand. Never automate LinkedIn actions (post, connect,
+  message, scrape). Drafts use only facts from base-resume.json (contact details are not
+  sent to the model); numbers not in the facts are rejected by `validatePost`. Tests:
+  `cd agents && npm run test:linkedin`. Workflow: `.github/workflows/linkedin-growth.yml`
+  (Sun 19:00 IST weekly, Mon-Fri 09:00 IST outreach).
 
 ## Orchestration — GitHub Actions (LIVE) — replaced n8n
 Free Actions in `.github/workflows/`:
