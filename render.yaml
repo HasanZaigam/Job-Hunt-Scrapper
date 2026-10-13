@@ -1,0 +1,31 @@
+# Render Blueprint for the dashboard (free web service, built from ./Dockerfile).
+#
+# Use: Render dashboard -> New -> Blueprint -> pick this repo -> fill the values
+# marked "sync: false" (Render asks for them once) -> Apply.
+# Full steps: docs/DEPLOY-RENDER.md
+services:
+  - type: web
+    name: job-hunt-dashboard
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /login
+    envVars:
+      # Your own Supabase project (Settings -> API). Never commit these.
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false # same value as SUPABASE_URL
+      # Gemini key (Google AI Studio), used when you click "Generate docs".
+      - key: GOOGLE_API_KEY
+        sync: false
+      # Dashboard login. Choose these yourself.
+      - key: DASHBOARD_EMAIL
+        sync: false
+      - key: DASHBOARD_PASSWORD
+        sync: false
+      # Session secret: Render generates a random value for you.
+      - key: AUTH_TOKEN
+        generateValue: true

@@ -7,7 +7,9 @@ Autonomous job application system. Scrapes AI/ML jobs, scores them, generates ta
 - Frontend: Next.js 15, Tailwind CSS, Shadcn UI → deployed on **Render**
   (free web service; needs a container host because doc generation runs headless
   Chromium — Vercel serverless couldn't provide the shared libs). Live URL:
-  https://job-hunt-dashboard-0885.onrender.com (service srv-d8ng000k1i2s73dajttg).
+  YOUR OWN deploy: see docs/DEPLOY-RENDER.md (render.yaml blueprint). The URL
+  job-hunt-dashboard-0885.onrender.com in older notes is the upstream project's, not ours.
+  Our URL: <add after first deploy>.
 - Database: Supabase (PostgreSQL) free tier
 - Orchestration: **GitHub Actions** (`.github/workflows/`). The old n8n Cloud
   workspace expired (~2026-06), so the daily pipeline was rebuilt as free
