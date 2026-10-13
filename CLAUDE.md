@@ -148,7 +148,10 @@ status NOT NULL — all applied to prod). The applications API references the
    stats/charts/activity; **Revert** sends one back to Applications. NOTE: the
    list API (`/api/applications`) excludes `dismissed`/`filtered` **in SQL before**
    its 200-row cap, so applied/matched jobs are never dropped by filtered noise.
-6. **Excluded** (`/filtered`), **Saved** (`/saved`) + notifications bell, Review
+6. **Run pipelines** (Settings page, `components/RunPipelines.tsx` → `/api/pipeline`): buttons
+   that start the GitHub Actions workflows via the API (allow-list in `lib/pipelines.ts`;
+   needs `GH_DISPATCH_TOKEN` on Render). The work still runs on Actions.
+7. **Excluded** (`/filtered`), **Saved** (`/saved`) + notifications bell, Review
    queue (Approve/Skip/Reject/Save). base-resume.json is the single source of truth
    for BOTH the matcher profile and the generated documents.
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Check, Info } from 'lucide-react';
+import { RunPipelines } from '../../components/RunPipelines';
 
 const LOCATIONS = ['Bengaluru', 'Hyderabad', 'Chennai', 'Pune', 'Remote'];
 
@@ -44,6 +45,8 @@ export default function SettingsPage() {
         <Info className="mt-0.5 h-4 w-4 shrink-0" />
         <p>These are local display preferences. The live agent config (scrape cadence, real caps) lives in the GitHub Actions workflows and <code className="rounded bg-primary/10 px-1">.env.local</code>.</p>
       </div>
+
+      <RunPipelines />
 
       <div className="card space-y-6 p-6">
         <div>

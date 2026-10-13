@@ -36,11 +36,26 @@ Render service -> Settings -> **Deploy Hook** -> copy the URL -> in GitHub add i
 repo secret `RENDER_DEPLOY_HOOK`. After that `.github/workflows/render-deploy.yml`
 redeploys the dashboard whenever dashboard files change on `main`.
 
-## 3. Free plan behaviour
+## 3. Run pipelines from the dashboard (optional)
+The **Settings** page has "Run pipelines" buttons that start the GitHub Actions
+workflows (daily pipeline, LinkedIn drafts, scorecard). The work still runs on
+GitHub; the button only triggers it and shows the last run status.
+
+1. GitHub -> profile picture -> Settings -> Developer settings -> Personal access
+   tokens -> **Fine-grained tokens** -> Generate new token.
+2. Repository access: **Only select repositories** -> this repo.
+3. Permissions -> Repository permissions -> **Actions: Read and write**
+   (Metadata: Read-only is added automatically). Nothing else.
+4. Set a short expiry (90 days), generate, copy the token.
+5. Render service -> Environment -> add `GH_DISPATCH_TOKEN` = the token -> Save
+   (it redeploys). Never commit the token.
+
+## 4. Free plan behaviour
 The service sleeps when idle; the first request after a break takes 30-60 seconds.
 That is normal.
 
-## 4. If something fails
+## 5. If something fails
 - Login says invalid: the email/password must match `DASHBOARD_EMAIL` / `DASHBOARD_PASSWORD` on YOUR Render service.
 - Pages show empty or error: check `SUPABASE_URL`, the service_role key, and that the migrations ran.
 - "Generate docs" fails: check `GOOGLE_API_KEY` and the Render service logs.
+- Run buttons say "Not configured" or "GitHub said 401/403/404": the `GH_DISPATCH_TOKEN` is missing, expired, or not scoped to this repo with Actions read/write.

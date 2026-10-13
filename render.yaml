@@ -29,3 +29,7 @@ services:
       # Session secret: Render generates a random value for you.
       - key: AUTH_TOKEN
         generateValue: true
+      # Lets the Settings page start GitHub Actions workflows (Run pipelines buttons).
+      # Fine-grained token, this repo only, Actions: read & write. Optional.
+      - key: GH_DISPATCH_TOKEN
+        sync: false
