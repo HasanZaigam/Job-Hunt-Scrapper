@@ -1,0 +1,74 @@
+# LinkedIn growth + outreach drafts + weekly job-switch scorecard.
+#
+# DRAFT ONLY. This workflow never touches LinkedIn: it writes drafts to Telegram
+# and you post/send them by hand (automating LinkedIn gets accounts restricted).
+#
+#   Sunday 19:00 IST  -> 3 post drafts for the week + scorecard vs goal
+#   Mon-Fri 09:00 IST -> connection note + follow-up for every job you approved
+#                        or applied to in the last 26 hours
+#
+# Secrets (same repo secrets as the daily pipeline, plus Telegram):
+#   GOOGLE_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_KEY, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+# Goal date and weekly targets live in agents/linkedin/goal.json.
+#
+# Manual run: Actions tab -> "LinkedIn growth" -> Run workflow.
+
+name: LinkedIn growth
+
+on:
+  schedule:
+    - cron: '30 13 * * 0'   # Sunday 19:00 IST
+    - cron: '30 3 * * 1-5'  # Mon-Fri 09:00 IST
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'What to generate'
+        type: choice
+        options: ['weekly', 'outreach', 'content', 'scorecard']
+        default: 'weekly'
+
+concurrency:
+  group: linkedin-growth
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      MODE: ${{ inputs.mode || (github.event.schedule == '30 13 * * 0' && 'weekly' || 'outreach') }}
+      PUPPETEER_SKIP_DOWNLOAD: '1'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Preflight — required secrets present
+        run: |
+          missing=0
+          for v in GOOGLE_API_KEY SUPABASE_URL SUPABASE_SERVICE_KEY TELEGRAM_BOT_TOKEN TELEGRAM_CHAT_ID; do
+            if [ -z "${!v}" ]; then echo "::error::Missing secret $v"; missing=1; fi
+          done
+          [ "$missing" = "0" ]
+
+      - name: Run (${{ env.MODE }})
+        run: npx ts-node agents/linkedin/index.ts "$MODE"
+
+      - name: Telegram failure alert
+        if: ${{ failure() }}
+        continue-on-error: true
+        run: |
+          curl -sS -o /dev/null -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=LinkedIn growth workflow FAILED: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
