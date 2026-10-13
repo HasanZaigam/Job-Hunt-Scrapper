@@ -9,7 +9,7 @@ Autonomous job application system. Scrapes AI/ML jobs, scores them, generates ta
   Chromium — Vercel serverless couldn't provide the shared libs). Live URL:
   YOUR OWN deploy: see docs/DEPLOY-RENDER.md (render.yaml blueprint). The URL
   job-hunt-dashboard-0885.onrender.com in older notes is the upstream project's, not ours.
-  Our URL: <add after first deploy>.
+  Our URL: https://job-hunt-dashboard-9oqu.onrender.com
 - Database: Supabase (PostgreSQL) free tier
 - Orchestration: **GitHub Actions** (`.github/workflows/`). The old n8n Cloud
   workspace expired (~2026-06), so the daily pipeline was rebuilt as free
