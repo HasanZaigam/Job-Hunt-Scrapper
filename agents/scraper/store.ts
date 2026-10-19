@@ -3,6 +3,7 @@ import { fetchGreenhouseJobs, type JobListing } from './greenhouse';
 import { fetchLeverJobs } from './lever';
 import { fetchAshbyJobs } from './ashby';
 import { isEligibleLocation } from './filters';
+import { classifyJobType } from './job-type';
 
 export type Ats = 'greenhouse' | 'lever' | 'ashby';
 
@@ -17,10 +18,31 @@ export function isTargetLocation(location: string): boolean {
   return isEligibleLocation(location);
 }
 
+// Known tracking-only params, safe to strip. Deliberately an allowlist, not
+// "strip everything": some ATSs put the real job id in the query string
+// (e.g. instacart.careers/job/?gh_jid=7658241 has NO id in the path) — a
+// blanket strip would collapse genuinely different postings onto one URL.
+const TRACKING_PARAMS = new Set(['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'ref', 'fbclid', 'gclid', 'igshid', 'mc_cid', 'mc_eid', 'source']);
+
+/** Strip tracking params + trailing slash so the same posting re-seen with
+ * different marketing params still dedupes to one row. */
+export function normalizeJdUrl(raw: string): string {
+  try {
+    const u = new URL(raw);
+    for (const p of [...u.searchParams.keys()]) {
+      if (TRACKING_PARAMS.has(p.toLowerCase())) u.searchParams.delete(p);
+    }
+    u.pathname = u.pathname.replace(/\/+$/, '') || '/';
+    return u.toString();
+  } catch {
+    return raw; // not a parseable URL — leave it untouched rather than guess
+  }
+}
+
 export async function getExistingUrls(supabase: ReturnType<typeof supabaseClient>): Promise<Set<string>> {
   const { data, error } = await supabase.from('applications').select('jd_url');
   if (error) throw new Error(`Supabase fetch error: ${error.message}`);
-  return new Set((data ?? []).map((r: any) => r.jd_url as string));
+  return new Set((data ?? []).map((r: any) => normalizeJdUrl(r.jd_url as string)));
 }
 
 export async function backlogCount(supabase: ReturnType<typeof supabaseClient>): Promise<number> {
@@ -50,12 +72,13 @@ export async function insertJobs(
   const rows = jobs.map(j => ({
     company: j.company,
     role: j.role,
-    jd_url: j.jd_url,
+    jd_url: normalizeJdUrl(j.jd_url),
     jd_text: j.jd_text,
     location: j.location,
     salary_range: j.salary_range,
     ats_type: j._ats, // DB enum accepts greenhouse | lever | ashby
     status: 'scraped',
+    job_type: classifyJobType(j.role, j.jd_text, { salaryRange: j.salary_range }),
   }));
   // Ignore-duplicate upsert on jd_url: one already-seen URL (e.g. a race with a
   // concurrent scrape) must not fail the whole batch. Existing rows are left
@@ -91,9 +114,10 @@ export async function insertManualJobs(
 ): Promise<number> {
   if (jobs.length === 0) return 0;
   const rows = jobs.map(j => ({
-    company: j.company, role: j.role, jd_url: j.jd_url, jd_text: j.jd_text,
+    company: j.company, role: j.role, jd_url: normalizeJdUrl(j.jd_url), jd_text: j.jd_text,
     location: j.location, salary_range: j.salary_range,
     ats_type: 'custom', is_manual_required: true, status: 'scraped',
+    job_type: classifyJobType(j.role, j.jd_text, { salaryRange: j.salary_range, isManualRequired: true }),
   }));
   const { data, error } = await supabase
     .from('applications')

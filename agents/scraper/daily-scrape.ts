@@ -3,7 +3,7 @@ import path from 'path';
 import { discoverNewJobs } from './apify-search';
 import {
   supabaseClient, getExistingUrls, backlogCount, isTargetLocation,
-  fetchBoard, insertJobs, insertManualJobs, prettyName, type Ats, type PendingJob,
+  fetchBoard, insertJobs, insertManualJobs, prettyName, normalizeJdUrl, type Ats, type PendingJob,
 } from './store';
 import { gateReason } from './quality-gate';
 import { fetchRemoteJobs } from './remote-boards';
@@ -20,9 +20,14 @@ const supabase = supabaseClient();
 
 interface Board { ats: Ats; atsId: string; company: string }
 
-// Static curated companies, in list order.
+// Static curated companies, in list order. `active: false` entries (audited
+// 2026-10-19: 0 India/worldwide-eligible postings) are kept in the file for
+// their record but skipped here — never deleted, since a company's hiring
+// mix can change later.
 function staticBoards(): Board[] {
-  return (companyList as any[]).map(c => ({ ats: c.ats, atsId: c.ats_id, company: c.name }));
+  return (companyList as any[])
+    .filter(c => c.active !== false)
+    .map(c => ({ ats: c.ats, atsId: c.ats_id, company: c.name }));
 }
 
 // Fresh boards discovered via Apify Google search.
@@ -66,13 +71,14 @@ async function harvest(
     stats.fetched += jobs.length;
     for (const job of jobs) {
       if (collected.length >= budget) break;
-      if (existingUrls.has(job.jd_url)) { stats.duplicate++; continue; }
+      const normUrl = normalizeJdUrl(job.jd_url);
+      if (existingUrls.has(normUrl)) { stats.duplicate++; continue; }
       if (!isTargetLocation(job.location)) { stats.region++; continue; }
       // Same deterministic gate the matcher applies (senior title, >5y, thin, spam,
       // off-target) — dropping these here keeps the backlog full of jobs worth scoring.
       const why = gateReason(job.role, job.jd_text, { company: job.company, salaryRange: job.salary_range });
       if (why) { stats.gated++; skipped.set(why, (skipped.get(why) ?? 0) + 1); continue; }
-      existingUrls.add(job.jd_url);
+      existingUrls.add(normUrl);
       collected.push({ ...job, _ats: b.ats });
       stats.kept++;
     }

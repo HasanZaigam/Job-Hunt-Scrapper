@@ -12,6 +12,7 @@ import { isEligibleLocation, matchesAiKeywords } from './filters';
 import { gateReason } from './quality-gate';
 import { MIN_JD_TEXT_CHARS } from './greenhouse';
 import { fetchJsonRetry } from './retry';
+import { normalizeJdUrl } from './store';
 
 export interface RemoteJob {
   company: string;
@@ -160,12 +161,13 @@ export async function fetchRemoteJobs(budget: number, existingUrls: Set<string>)
     const stats = { fetched: raw.length, duplicate: 0, title: 0, region: 0, thin: 0, gated: 0, kept: 0 };
     for (const j of raw) {
       if (collected.length >= budget) break;
-      if (existingUrls.has(j.jd_url)) { stats.duplicate++; continue; }
+      const normUrl = normalizeJdUrl(j.jd_url);
+      if (existingUrls.has(normUrl)) { stats.duplicate++; continue; }
       if (!matchesAiKeywords(j.role)) { stats.title++; continue; }
       if (!isEligibleLocation(j.location)) { stats.region++; continue; }
       if (j.jd_text.length < MIN_JD_TEXT_CHARS) { stats.thin++; continue; }
       if (gateReason(j.role, j.jd_text, { company: j.company, salaryRange: j.salary_range })) { stats.gated++; continue; }
-      existingUrls.add(j.jd_url);
+      existingUrls.add(normUrl);
       collected.push(j);
       stats.kept++;
     }
