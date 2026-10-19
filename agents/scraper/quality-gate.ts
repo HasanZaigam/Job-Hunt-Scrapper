@@ -59,8 +59,15 @@ export const maxYears = requiredYears;
 
 /** Returns a filter reason string if the job should be gated, else null. */
 export function gateReason(role: string, jdText: string, extra: { company?: string | null; salaryRange?: string | null } = {}): string | null {
-  if (SENIOR.test(role || '')) return 'senior-only title';
-  if (requiredYears(jdText || '') >= MAX_YEARS_ALLOWED) return `requires ${MAX_YEARS_ALLOWED}+ years experience`;
+  const years = requiredYears(jdText || '');
+  // A "Senior"/"Lead"/etc title is normally a hard gate, but titles lie more
+  // than JD text does — if the JD itself proves the role only asks for ≤3
+  // years, the title alone shouldn't override that. No years stated at all
+  // (years === 0) keeps the conservative default: gate on the title, since
+  // there's no counter-evidence. Audited against 20 historical rejections
+  // (2026-10-19): 18/20 genuinely needed 5-15y; 2/20 were ≤3y false positives.
+  if (SENIOR.test(role || '') && !(years > 0 && years <= 3)) return 'senior-only title';
+  if (years >= MAX_YEARS_ALLOWED) return `requires ${MAX_YEARS_ALLOWED}+ years experience`;
   if ((jdText || '').length < MIN_JD) return 'thin description';
   if (SPAM.test(jdText || '') || SPAM.test(role || '')) return 'spam';
 

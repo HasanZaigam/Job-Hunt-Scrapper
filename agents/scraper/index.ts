@@ -58,7 +58,7 @@ async function main() {
   const allNew: JobListing[] = [];
   let duplicates = 0;
 
-  for (const company of companyList as any[]) {
+  for (const company of (companyList as any[]).filter(c => c.active !== false)) {
     if (allNew.length >= MAX_NEW_JOBS_PER_RUN) break;
 
     let jobs: JobListing[] = [];

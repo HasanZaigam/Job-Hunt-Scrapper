@@ -195,6 +195,64 @@ tests['completely empty location string -> ambiguous, not silently admitted'] = 
   assert.strictEqual(result.passed, false);
 };
 
+// --- region-lock audit additions (2026-10-19): "any timezone" / IST-overlap
+// wording means no real restriction, same as "worldwide" — but a country
+// restriction stated alongside it still wins (checked first in normalizeLocation).
+
+tests['"Remote - any timezone" -> remote_global, eligible'] = () => {
+  const result = evaluateLocationGate('Remote - any timezone', PROFILE);
+  assert.strictEqual(result.location.category, 'remote_global');
+  assert.strictEqual(result.passed, true);
+};
+
+tests['"Remote (all time zones welcome)" -> remote_global, eligible'] = () => {
+  const result = evaluateLocationGate('Remote (all time zones welcome)', PROFILE);
+  assert.strictEqual(result.location.category, 'remote_global');
+  assert.strictEqual(result.passed, true);
+};
+
+tests['"Remote - India Standard Time" -> eligible (remote_india, since the string also literally says India)'] = () => {
+  const result = evaluateLocationGate('Remote - India Standard Time', PROFILE);
+  assert.strictEqual(result.location.category, 'remote_india');
+  assert.strictEqual(result.passed, true);
+};
+
+tests['"Remote - IST" (no literal "India") -> remote_global, eligible via IST_WORD'] = () => {
+  const result = evaluateLocationGate('Remote - IST', PROFILE);
+  assert.strictEqual(result.location.category, 'remote_global');
+  assert.strictEqual(result.passed, true);
+};
+
+tests['"Remote - UTC-5 to UTC+5" (reaches IST with tolerance) -> remote_global, eligible'] = () => {
+  const result = evaluateLocationGate('Remote - UTC-5 to UTC+5', PROFILE);
+  assert.strictEqual(result.location.category, 'remote_global');
+  assert.strictEqual(result.passed, true);
+};
+
+tests['"Remote - UTC±5" -> remote_global, eligible'] = () => {
+  const result = evaluateLocationGate('Remote - UTC±5', PROFILE);
+  assert.strictEqual(result.location.category, 'remote_global');
+  assert.strictEqual(result.passed, true);
+};
+
+tests['"Remote - UTC-8 to UTC-4" (does not reach IST) -> ambiguous, rejected'] = () => {
+  const result = evaluateLocationGate('Remote - UTC-8 to UTC-4', PROFILE);
+  assert.strictEqual(result.location.category, 'ambiguous');
+  assert.strictEqual(result.passed, false);
+};
+
+tests['REGRESSION: "Remote - EMEA" stays ambiguous/rejected (EMEA does not include India)'] = () => {
+  const result = evaluateLocationGate('Remote - EMEA', PROFILE);
+  assert.strictEqual(result.location.category, 'ambiguous');
+  assert.strictEqual(result.passed, false);
+};
+
+tests['REGRESSION: "Remote - US, any timezone" stays remote_us_only/rejected (country wins over timezone wording)'] = () => {
+  const result = evaluateLocationGate('Remote - US, any timezone', PROFILE);
+  assert.strictEqual(result.location.category, 'remote_us_only');
+  assert.strictEqual(result.passed, false);
+};
+
 export function run(): { name: string; passed: boolean; error?: string }[] {
   return Object.entries(tests).map(([name, fn]) => {
     try {
