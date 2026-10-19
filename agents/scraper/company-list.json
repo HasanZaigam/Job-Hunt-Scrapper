@@ -410,5 +410,14 @@
     "ats": "ashby",
     "ats_id": "unstructured",
     "careers_url": "https://unstructured.io/careers"
+  },
+  {
+    "name": "Trackmind",
+    "ats": "lever",
+    "ats_id": "trackmind",
+    "careers_url": "",
+    "active": true,
+    "source": "discovered",
+    "discovered_at": "2026-10-19"
   }
 ]

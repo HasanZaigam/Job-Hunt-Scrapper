@@ -8,11 +8,21 @@
     "location": "Noida, India"
   },
   "target_locations": [
+    "Bengaluru",
+    "Bangalore",
+    "Chennai",
+    "Hyderabad",
+    "Gurugram",
+    "Gurgaon",
     "Noida",
     "Delhi",
-    "Bengaluru",
+    "Pune",
+    "India",
     "Remote",
-    "India"
+    "Remote India",
+    "Remote - APAC",
+    "Remote - Worldwide",
+    "Anywhere"
   ],
   "target_keywords": [
     "AI Engineer",
