@@ -15,13 +15,14 @@ export async function GET() {
     return count ?? 0;
   };
 
-  const [review, manual, interviews, saved, filtered] = await Promise.all([
-    countOf(q => q.eq('status', 'matched')),
+  const [review, manual, interviews, saved, filtered, gigs] = await Promise.all([
+    countOf(q => q.eq('status', 'matched').not('job_type', 'eq', 'contract_gig')),
     countOf(q => q.eq('is_manual_required', true).in('status', ['matched', 'approved'])),
     countOf(q => q.in('status', ['interview_scheduled', 'assessment', 'offer'])),
     countOf(q => q.eq('starred', true)),
     countOf(q => q.eq('status', 'filtered')),
+    countOf(q => q.eq('job_type', 'contract_gig').not('status', 'in', '(dismissed,filtered)')),
   ]);
 
-  return NextResponse.json({ review, manual, interviews, saved, filtered });
+  return NextResponse.json({ review, manual, interviews, saved, filtered, gigs });
 }
