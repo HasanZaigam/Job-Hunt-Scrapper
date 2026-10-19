@@ -29,7 +29,53 @@ const COUNTRY_HINTS: [RegExp, string][] = [
 // gazetteer.
 const EU_HINT = /\b(europe|european union|\beu\b|germany|france|spain|italy|netherlands|ireland|portugal|poland)\b/i;
 const ASIA_HINT = /\b(asia|apac)\b/i; // generic Asia mention NOT already resolved to India above
+// Deliberately NOT folded into GLOBAL_HINT: "worldwide"/"global" are strong,
+// standalone no-restriction signals that are allowed to override even an
+// India mention (see the hasGlobalWord branch below). "Any timezone" only
+// describes working hours, not geography — "Remote - US, any timezone" means
+// US-only-but-flexible-hours, not worldwide. It's checked later, alongside
+// IST-overlap, only after country/EU checks have had first say.
 const GLOBAL_HINT = /\b(worldwide|global|anywhere|international)\b/i;
+const IST_WORD = /\b(ist|india standard time|indian standard time)\b/i;
+const ANY_TIMEZONE = /\bany\s*time[\s-]?zones?\b|\ball\s*time[\s-]?zones?\b/i;
+
+/** Parse a UTC/GMT offset token like "+5", "-5:30", "5", "+5.5" into decimal hours. */
+function parseUtcOffset(token: string): number | null {
+  const m = token.match(/([+-]?\d{1,2})(?::(\d{2})|\.(\d))?/);
+  if (!m) return null;
+  const sign = m[1].trim().startsWith('-') ? -1 : 1;
+  const hours = Math.abs(parseInt(m[1], 10));
+  const frac = m[2] ? parseInt(m[2], 10) / 60 : m[3] ? parseInt(m[3], 10) / 10 : 0;
+  return sign * (hours + frac);
+}
+
+// IST is UTC+5:30. A stated UTC/GMT working-hours range (e.g. "UTC-5 to UTC+5",
+// "UTC±5") that reaches or nearly reaches +5:30 is treated as IST-overlapping —
+// a half-hour tolerance covers postings that round to the nearest whole hour.
+function includesIstOverlap(raw: string): boolean {
+  const l = (raw || '').toLowerCase();
+  if (IST_WORD.test(l) || ANY_TIMEZONE.test(l)) return true;
+
+  const plusMinus = l.match(/(?:utc|gmt)\s*(?:±|\+\/-|\+-)\s*(\d{1,2}(?::\d{2}|\.\d)?)/);
+  if (plusMinus) {
+    const off = parseUtcOffset(plusMinus[1]);
+    if (off != null && Math.abs(off) + 0.5 >= 5.5) return true;
+  }
+
+  const range = l.match(
+    /(?:utc|gmt)\s*([+-]\d{1,2}(?::\d{2}|\.\d)?)\s*(?:to|through|-|–)\s*(?:(?:utc|gmt)\s*)?([+-]\d{1,2}(?::\d{2}|\.\d)?)/
+  );
+  if (range) {
+    const a = parseUtcOffset(range[1]);
+    const b = parseUtcOffset(range[2]);
+    if (a != null && b != null) {
+      const lo = Math.min(a, b) - 0.5;
+      const hi = Math.max(a, b) + 0.5;
+      if (5.5 >= lo && 5.5 <= hi) return true;
+    }
+  }
+  return false;
+}
 
 function norm(s: string): string {
   return (s || '').toLowerCase().trim();
@@ -110,6 +156,11 @@ export function normalizeLocation(rawLocation: string): { location: LocationElig
       category = 'remote_uk_only';
     } else if (isEu) {
       category = 'remote_eu_only';
+    } else if (includesIstOverlap(raw)) {
+      // No specific country/region restriction was detected above, and the
+      // posting states "any timezone" or a UTC/GMT working-hours range that
+      // reaches IST (UTC+5:30) — functionally unrestricted for this candidate.
+      category = 'remote_global';
     } else if (residual === '') {
       // Bare "Remote" / "Fully Remote" with nothing else — no restriction
       // stated at all.

@@ -1,48 +1,423 @@
 [
-  { "name": "OpenAI", "ats": "ashby", "ats_id": "openai", "careers_url": "https://openai.com/careers" },
-  { "name": "Anthropic", "ats": "greenhouse", "ats_id": "anthropic", "careers_url": "https://anthropic.com/careers" },
-  { "name": "Cohere", "ats": "ashby", "ats_id": "cohere", "careers_url": "https://cohere.com/careers" },
-  { "name": "Mistral AI", "ats": "lever", "ats_id": "mistral", "careers_url": "https://mistral.ai/careers" },
-  { "name": "Stability AI", "ats": "greenhouse", "ats_id": "stabilityai", "careers_url": "https://stability.ai/careers" },
-  { "name": "Scale AI", "ats": "greenhouse", "ats_id": "scaleai", "careers_url": "https://scale.com/careers" },
-  { "name": "LangChain", "ats": "ashby", "ats_id": "langchain", "careers_url": "https://langchain.com/careers" },
-  { "name": "Pinecone", "ats": "ashby", "ats_id": "pinecone", "careers_url": "https://pinecone.io/careers" },
-  { "name": "Weaviate", "ats": "ashby", "ats_id": "weaviate", "careers_url": "https://weaviate.io/careers" },
-  { "name": "Together AI", "ats": "greenhouse", "ats_id": "togetherai", "careers_url": "https://together.ai/careers" },
-  { "name": "Modal", "ats": "ashby", "ats_id": "modal", "careers_url": "https://modal.com/careers" },
-  { "name": "Lightning AI", "ats": "greenhouse", "ats_id": "lightningai", "careers_url": "https://lightning.ai/careers" },
-  { "name": "Deepgram", "ats": "ashby", "ats_id": "deepgram", "careers_url": "https://deepgram.com/careers" },
-  { "name": "AssemblyAI", "ats": "greenhouse", "ats_id": "assemblyai", "careers_url": "https://assemblyai.com/careers" },
-  { "name": "ElevenLabs", "ats": "ashby", "ats_id": "elevenlabs", "careers_url": "https://elevenlabs.io/careers" },
-  { "name": "Synthesia", "ats": "ashby", "ats_id": "synthesia", "careers_url": "https://synthesia.io/careers" },
-  { "name": "Runway", "ats": "ashby", "ats_id": "runway", "careers_url": "https://runwayml.com/careers" },
-  { "name": "Pika Labs", "ats": "ashby", "ats_id": "pika", "careers_url": "https://pika.art/careers" },
-  { "name": "Perplexity AI", "ats": "ashby", "ats_id": "perplexity", "careers_url": "https://perplexity.ai/careers" },
-  { "name": "Exa AI", "ats": "ashby", "ats_id": "exa", "careers_url": "https://exa.ai/careers" },
-  { "name": "Arize AI", "ats": "greenhouse", "ats_id": "arizeai", "careers_url": "https://arize.com/careers" },
-  { "name": "Fiddler AI", "ats": "ashby", "ats_id": "fiddler-ai", "careers_url": "https://fiddler.ai/careers" },
-  { "name": "Snorkel AI", "ats": "greenhouse", "ats_id": "snorkelai", "careers_url": "https://snorkel.ai/careers" },
-  { "name": "Labelbox", "ats": "greenhouse", "ats_id": "labelbox", "careers_url": "https://labelbox.com/careers" },
-  { "name": "Roboflow", "ats": "ashby", "ats_id": "roboflow", "careers_url": "https://roboflow.com/careers" },
-  { "name": "Comet ML", "ats": "greenhouse", "ats_id": "comet", "careers_url": "https://comet.com/careers" },
-  { "name": "Shield AI", "ats": "lever", "ats_id": "shieldai", "careers_url": "https://shield.ai/careers" },
-  { "name": "Cognite", "ats": "greenhouse", "ats_id": "cognite", "careers_url": "https://cognite.com/careers" },
-  { "name": "Palantir", "ats": "lever", "ats_id": "palantir", "careers_url": "https://palantir.com/careers" },
-  { "name": "Dataiku", "ats": "greenhouse", "ats_id": "dataiku", "careers_url": "https://dataiku.com/careers" },
-  { "name": "Databricks", "ats": "greenhouse", "ats_id": "databricks", "careers_url": "https://databricks.com/careers" },
-  { "name": "Snowflake", "ats": "ashby", "ats_id": "snowflake", "careers_url": "https://snowflake.com/careers" },
-  { "name": "Glean", "ats": "greenhouse", "ats_id": "gleanwork", "careers_url": "https://glean.com/careers" },
-  { "name": "Writer", "ats": "ashby", "ats_id": "writer", "careers_url": "https://writer.com/careers" },
-  { "name": "Typeface", "ats": "greenhouse", "ats_id": "typeface", "careers_url": "https://typeface.ai/careers" },
-  { "name": "Gamma", "ats": "ashby", "ats_id": "gamma", "careers_url": "https://gamma.app/careers" },
-  { "name": "Linear", "ats": "ashby", "ats_id": "linear", "careers_url": "https://linear.app/careers" },
-  { "name": "Vercel", "ats": "greenhouse", "ats_id": "vercel", "careers_url": "https://vercel.com/careers" },
-  { "name": "RunPod", "ats": "ashby", "ats_id": "runpod", "careers_url": "https://runpod.io/careers" },
-  { "name": "Chroma", "ats": "ashby", "ats_id": "trychroma", "careers_url": "https://trychroma.com/careers" },
-  { "name": "You.com", "ats": "greenhouse", "ats_id": "youcom", "careers_url": "https://you.com/careers" },
-  { "name": "Tractable", "ats": "ashby", "ats_id": "tractable", "careers_url": "https://tractable.ai/careers" },
-  { "name": "Nuro", "ats": "greenhouse", "ats_id": "nuro", "careers_url": "https://nuro.ai/careers" },
-  { "name": "Domino Data Lab", "ats": "greenhouse", "ats_id": "dominodatalab", "careers_url": "https://domino.ai/careers" },
-  { "name": "Inflection AI", "ats": "greenhouse", "ats_id": "inflectionai", "careers_url": "https://inflection.ai/careers" },
-  { "name": "Character AI", "ats": "ashby", "ats_id": "character", "careers_url": "https://character.ai/careers" }
+  {
+    "name": "OpenAI",
+    "ats": "ashby",
+    "ats_id": "openai",
+    "careers_url": "https://openai.com/careers"
+  },
+  {
+    "name": "Anthropic",
+    "ats": "greenhouse",
+    "ats_id": "anthropic",
+    "careers_url": "https://anthropic.com/careers"
+  },
+  {
+    "name": "Cohere",
+    "ats": "ashby",
+    "ats_id": "cohere",
+    "careers_url": "https://cohere.com/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (22 AI-titled fetched)"
+  },
+  {
+    "name": "Mistral AI",
+    "ats": "lever",
+    "ats_id": "mistral",
+    "careers_url": "https://mistral.ai/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (0 AI-titled fetched)"
+  },
+  {
+    "name": "Stability AI",
+    "ats": "greenhouse",
+    "ats_id": "stabilityai",
+    "careers_url": "https://stability.ai/careers"
+  },
+  {
+    "name": "Scale AI",
+    "ats": "greenhouse",
+    "ats_id": "scaleai",
+    "careers_url": "https://scale.com/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (48 AI-titled fetched)"
+  },
+  {
+    "name": "LangChain",
+    "ats": "ashby",
+    "ats_id": "langchain",
+    "careers_url": "https://langchain.com/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (11 AI-titled fetched)"
+  },
+  {
+    "name": "Pinecone",
+    "ats": "ashby",
+    "ats_id": "pinecone",
+    "careers_url": "https://pinecone.io/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (0 AI-titled fetched)"
+  },
+  {
+    "name": "Weaviate",
+    "ats": "ashby",
+    "ats_id": "weaviate",
+    "careers_url": "https://weaviate.io/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (0 AI-titled fetched)"
+  },
+  {
+    "name": "Together AI",
+    "ats": "greenhouse",
+    "ats_id": "togetherai",
+    "careers_url": "https://together.ai/careers"
+  },
+  {
+    "name": "Modal",
+    "ats": "ashby",
+    "ats_id": "modal",
+    "careers_url": "https://modal.com/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (3 AI-titled fetched)"
+  },
+  {
+    "name": "Lightning AI",
+    "ats": "greenhouse",
+    "ats_id": "lightningai",
+    "careers_url": "https://lightning.ai/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (10 AI-titled fetched)"
+  },
+  {
+    "name": "Deepgram",
+    "ats": "ashby",
+    "ats_id": "deepgram",
+    "careers_url": "https://deepgram.com/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (19 AI-titled fetched)"
+  },
+  {
+    "name": "AssemblyAI",
+    "ats": "greenhouse",
+    "ats_id": "assemblyai",
+    "careers_url": "https://assemblyai.com/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (4 AI-titled fetched)"
+  },
+  {
+    "name": "ElevenLabs",
+    "ats": "ashby",
+    "ats_id": "elevenlabs",
+    "careers_url": "https://elevenlabs.io/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (2 AI-titled fetched)"
+  },
+  {
+    "name": "Synthesia",
+    "ats": "ashby",
+    "ats_id": "synthesia",
+    "careers_url": "https://synthesia.io/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (6 AI-titled fetched)"
+  },
+  {
+    "name": "Runway",
+    "ats": "ashby",
+    "ats_id": "runway",
+    "careers_url": "https://runwayml.com/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (0 AI-titled fetched)"
+  },
+  {
+    "name": "Pika Labs",
+    "ats": "ashby",
+    "ats_id": "pika",
+    "careers_url": "https://pika.art/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (3 AI-titled fetched)"
+  },
+  {
+    "name": "Perplexity AI",
+    "ats": "ashby",
+    "ats_id": "perplexity",
+    "careers_url": "https://perplexity.ai/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (26 AI-titled fetched)"
+  },
+  {
+    "name": "Exa AI",
+    "ats": "ashby",
+    "ats_id": "exa",
+    "careers_url": "https://exa.ai/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (2 AI-titled fetched)"
+  },
+  {
+    "name": "Arize AI",
+    "ats": "greenhouse",
+    "ats_id": "arizeai",
+    "careers_url": "https://arize.com/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (11 AI-titled fetched)"
+  },
+  {
+    "name": "Fiddler AI",
+    "ats": "ashby",
+    "ats_id": "fiddler-ai",
+    "careers_url": "https://fiddler.ai/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (0 AI-titled fetched)"
+  },
+  {
+    "name": "Snorkel AI",
+    "ats": "greenhouse",
+    "ats_id": "snorkelai",
+    "careers_url": "https://snorkel.ai/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (7 AI-titled fetched)"
+  },
+  {
+    "name": "Labelbox",
+    "ats": "greenhouse",
+    "ats_id": "labelbox",
+    "careers_url": "https://labelbox.com/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (2 AI-titled fetched)"
+  },
+  {
+    "name": "Roboflow",
+    "ats": "ashby",
+    "ats_id": "roboflow",
+    "careers_url": "https://roboflow.com/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (3 AI-titled fetched)"
+  },
+  {
+    "name": "Comet ML",
+    "ats": "greenhouse",
+    "ats_id": "comet",
+    "careers_url": "https://comet.com/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (0 AI-titled fetched)"
+  },
+  {
+    "name": "Shield AI",
+    "ats": "lever",
+    "ats_id": "shieldai",
+    "careers_url": "https://shield.ai/careers"
+  },
+  {
+    "name": "Cognite",
+    "ats": "greenhouse",
+    "ats_id": "cognite",
+    "careers_url": "https://cognite.com/careers"
+  },
+  {
+    "name": "Palantir",
+    "ats": "lever",
+    "ats_id": "palantir",
+    "careers_url": "https://palantir.com/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (3 AI-titled fetched)"
+  },
+  {
+    "name": "Dataiku",
+    "ats": "greenhouse",
+    "ats_id": "dataiku",
+    "careers_url": "https://dataiku.com/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (0 AI-titled fetched)"
+  },
+  {
+    "name": "Databricks",
+    "ats": "greenhouse",
+    "ats_id": "databricks",
+    "careers_url": "https://databricks.com/careers"
+  },
+  {
+    "name": "Snowflake",
+    "ats": "ashby",
+    "ats_id": "snowflake",
+    "careers_url": "https://snowflake.com/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (48 AI-titled fetched)"
+  },
+  {
+    "name": "Glean",
+    "ats": "greenhouse",
+    "ats_id": "gleanwork",
+    "careers_url": "https://glean.com/careers"
+  },
+  {
+    "name": "Writer",
+    "ats": "ashby",
+    "ats_id": "writer",
+    "careers_url": "https://writer.com/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (18 AI-titled fetched)"
+  },
+  {
+    "name": "Typeface",
+    "ats": "greenhouse",
+    "ats_id": "typeface",
+    "careers_url": "https://typeface.ai/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (1 AI-titled fetched)"
+  },
+  {
+    "name": "Gamma",
+    "ats": "ashby",
+    "ats_id": "gamma",
+    "careers_url": "https://gamma.app/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (3 AI-titled fetched)"
+  },
+  {
+    "name": "Linear",
+    "ats": "ashby",
+    "ats_id": "linear",
+    "careers_url": "https://linear.app/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (1 AI-titled fetched)"
+  },
+  {
+    "name": "Vercel",
+    "ats": "greenhouse",
+    "ats_id": "vercel",
+    "careers_url": "https://vercel.com/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (4 AI-titled fetched)"
+  },
+  {
+    "name": "RunPod",
+    "ats": "ashby",
+    "ats_id": "runpod",
+    "careers_url": "https://runpod.io/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (1 AI-titled fetched)"
+  },
+  {
+    "name": "Chroma",
+    "ats": "ashby",
+    "ats_id": "trychroma",
+    "careers_url": "https://trychroma.com/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (0 AI-titled fetched)"
+  },
+  {
+    "name": "You.com",
+    "ats": "greenhouse",
+    "ats_id": "youcom",
+    "careers_url": "https://you.com/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (1 AI-titled fetched)"
+  },
+  {
+    "name": "Tractable",
+    "ats": "ashby",
+    "ats_id": "tractable",
+    "careers_url": "https://tractable.ai/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (0 AI-titled fetched)"
+  },
+  {
+    "name": "Nuro",
+    "ats": "greenhouse",
+    "ats_id": "nuro",
+    "careers_url": "https://nuro.ai/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (29 AI-titled fetched)"
+  },
+  {
+    "name": "Domino Data Lab",
+    "ats": "greenhouse",
+    "ats_id": "dominodatalab",
+    "careers_url": "https://domino.ai/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (2 AI-titled fetched)"
+  },
+  {
+    "name": "Inflection AI",
+    "ats": "greenhouse",
+    "ats_id": "inflectionai",
+    "careers_url": "https://inflection.ai/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (3 AI-titled fetched)"
+  },
+  {
+    "name": "Character AI",
+    "ats": "ashby",
+    "ats_id": "character",
+    "careers_url": "https://character.ai/careers",
+    "active": false,
+    "inactive_reason": "0 India/worldwide-eligible postings audited 2026-10-19 (6 AI-titled fetched)"
+  },
+  {
+    "name": "GitLab",
+    "ats": "greenhouse",
+    "ats_id": "gitlab",
+    "careers_url": "https://about.gitlab.com/jobs/"
+  },
+  {
+    "name": "Baseten",
+    "ats": "ashby",
+    "ats_id": "baseten",
+    "careers_url": "https://baseten.co/careers"
+  },
+  {
+    "name": "n8n",
+    "ats": "ashby",
+    "ats_id": "n8n",
+    "careers_url": "https://n8n.io/careers"
+  },
+  {
+    "name": "Workato",
+    "ats": "greenhouse",
+    "ats_id": "workato",
+    "careers_url": "https://workato.com/careers"
+  },
+  {
+    "name": "Turing",
+    "ats": "greenhouse",
+    "ats_id": "turing",
+    "careers_url": "https://turing.com/careers"
+  },
+  {
+    "name": "Tavus",
+    "ats": "ashby",
+    "ats_id": "tavus",
+    "careers_url": "https://tavus.io/careers"
+  },
+  {
+    "name": "Vapi",
+    "ats": "ashby",
+    "ats_id": "vapi",
+    "careers_url": "https://vapi.ai/careers"
+  },
+  {
+    "name": "Speak",
+    "ats": "ashby",
+    "ats_id": "speak",
+    "careers_url": "https://speak.com/careers"
+  },
+  {
+    "name": "LlamaIndex",
+    "ats": "ashby",
+    "ats_id": "llamaindex",
+    "careers_url": "https://llamaindex.ai/careers"
+  },
+  {
+    "name": "Unstructured",
+    "ats": "ashby",
+    "ats_id": "unstructured",
+    "careers_url": "https://unstructured.io/careers"
+  },
+  {
+    "name": "Trackmind",
+    "ats": "lever",
+    "ats_id": "trackmind",
+    "careers_url": "",
+    "active": true,
+    "source": "discovered",
+    "discovered_at": "2026-10-19"
+  }
 ]

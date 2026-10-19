@@ -2,6 +2,7 @@ import assert from 'assert';
 import { isEligibleLocation, matchesAiKeywords, matchesKeywords } from '../filters';
 import { gateReason, requiredYears } from '../quality-gate';
 import { ashbyLocation } from '../ashby';
+import { normalizeJdUrl } from '../store';
 
 type Test = () => void;
 const tests: Record<string, Test> = {};
@@ -40,6 +41,26 @@ tests['Ashby remote jobs keep their region'] = () => {
   assert.strictEqual(ashbyLocation({ location: 'Bengaluru', address: { postalAddress: { addressCountry: 'India' } } }), 'Bengaluru; India');
 };
 
+// ---- jd_url normalization (dedupe audit)
+tests['normalizeJdUrl strips tracking params but keeps real identifying query params'] = () => {
+  assert.strictEqual(
+    normalizeJdUrl('https://job-boards.greenhouse.io/acme/jobs/123?utm_source=li&utm_campaign=x'),
+    'https://job-boards.greenhouse.io/acme/jobs/123'
+  );
+  // gh_jid is the REAL job id for this ATS pattern — must survive normalization
+  // (only the trailing slash and the tracking param are stripped).
+  assert.strictEqual(
+    normalizeJdUrl('https://instacart.careers/job/?gh_jid=7658241&utm_source=google'),
+    'https://instacart.careers/job?gh_jid=7658241'
+  );
+};
+tests['normalizeJdUrl strips a trailing slash'] = () => {
+  assert.strictEqual(normalizeJdUrl('https://example.com/jobs/123/'), 'https://example.com/jobs/123');
+};
+tests['normalizeJdUrl leaves an unparseable string untouched rather than guessing'] = () => {
+  assert.strictEqual(normalizeJdUrl('not-a-url'), 'not-a-url');
+};
+
 // ---- title matching (problem 3)
 tests['AI/ML terms match as whole words only'] = () => {
   for (const t of ['AI Engineer', 'Senior ML Engineer', 'AI/ML Engineer', 'Generative AI Developer', 'LLMs Platform Engineer', 'MLOps Engineer', 'Gen-AI Lead']) {
@@ -61,6 +82,18 @@ tests['v1 gate now blocks "Senior" titles'] = () => {
     assert.strictEqual(gateReason(r, JD), 'senior-only title', r);
   }
   assert.strictEqual(gateReason('AI Engineer', JD), null);
+};
+tests['a "Senior"/"Lead" title is allowed when the JD proves <=3 years required'] = () => {
+  const lowYearsJD = 'We need 3 years of experience building LLM applications with Python and AI features. '.repeat(4);
+  assert.strictEqual(gateReason('Senior AI Engineer', lowYearsJD), null);
+  assert.strictEqual(gateReason('Product Lead, AI Platform', lowYearsJD), null);
+};
+tests['a "Senior"/"Lead" title with no years stated at all still gates (no counter-evidence)'] = () => {
+  assert.strictEqual(gateReason('Senior AI Engineer', JD), 'senior-only title');
+};
+tests['a "Senior"/"Lead" title with >3 years stated still gates'] = () => {
+  const highYearsJD = 'We need 5+ years of experience building LLM applications with Python and AI features. '.repeat(4);
+  assert.strictEqual(gateReason('Senior AI Engineer', highYearsJD), 'senior-only title');
 };
 tests['gate no longer passes a job with an empty title and no AI content'] = () => {
   const plain = 'We sell insurance and manage claims for retail customers across the region. '.repeat(8);

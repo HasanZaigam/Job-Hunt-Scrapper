@@ -12,6 +12,7 @@ export async function GET(req: NextRequest) {
   const search = searchParams.get('search');
   const manual = searchParams.get('manual');
   const starred = searchParams.get('starred');
+  const jobType = searchParams.get('jobType'); // 'gigs' | 'all' | (default: hide contract_gig)
 
   // Single application lookup (for polling)
   if (id) {
@@ -44,6 +45,12 @@ export async function GET(req: NextRequest) {
   if (maxScore) query = query.lte('match_score', parseInt(maxScore));
   if (search) query = query.ilike('company', `%${search}%`);
   if (manual === 'true') query = query.eq('is_manual_required', true);
+
+  // Contract/eval gigs (Askable/Patronus-style) are a valid side-income track,
+  // not noise — they get their own view (jobType=gigs) instead of being
+  // dropped. Every other view defaults to full_time + unknown.
+  if (jobType === 'gigs') query = query.eq('job_type', 'contract_gig');
+  else if (jobType !== 'all') query = query.not('job_type', 'eq', 'contract_gig');
 
   query = query.limit(200);
 

@@ -5,12 +5,13 @@ import { ExternalLink, ChevronDown } from 'lucide-react';
 import { MatchBadge } from './MatchBadge';
 import { ApproveButton } from './ApproveButton';
 import { PillButton } from './PillButton';
-import { cn, parseJustification } from '../lib/utils';
+import { cn, parseJustification, locationTrack } from '../lib/utils';
 
 export interface Application {
   id: string;
   company: string;
   role: string;
+  location?: string | null;
   match_score: number | null;
   match_justification: string | null;
   missing_skills: string[] | null;
@@ -148,7 +149,17 @@ export function ApplicationTable({ applications, onStatusChange }: Props) {
                       </a>
                     </div>
                   </td>
-                  <td className="max-w-xs truncate px-4 py-3 text-muted-foreground">{app.role}</td>
+                  <td className="max-w-xs px-4 py-3 text-muted-foreground">
+                    <p className="truncate">{app.role}</p>
+                    {app.location != null && (
+                      <span className={cn(
+                        'pill mt-1 text-[10px]',
+                        locationTrack(app.location) === 'india_local' ? 'bg-accent/15 text-accent' : 'bg-muted text-muted-foreground'
+                      )}>
+                        {locationTrack(app.location) === 'india_local' ? 'India onsite/hybrid' : 'Remote'}
+                      </span>
+                    )}
+                  </td>
                   <td className="px-4 py-3"><MatchBadge score={app.match_score} /></td>
                   <td className="px-4 py-3">
                     {app.match_justification ? (
