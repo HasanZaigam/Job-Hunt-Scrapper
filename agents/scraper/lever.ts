@@ -1,6 +1,6 @@
-import fetch from 'node-fetch';
 import { MIN_JD_TEXT_CHARS, type JobListing } from './greenhouse';
 import { matchesAiKeywords } from './filters';
+import { fetchJsonRetry } from './retry';
 
 function extractText(lists: any[]): string {
   if (!Array.isArray(lists)) return '';
@@ -18,20 +18,7 @@ export async function fetchLeverJobs(
   atsId: string
 ): Promise<JobListing[]> {
   const url = `https://api.lever.co/v0/postings/${atsId}?mode=json`;
-
-  let data: any[];
-  try {
-    const res = await fetch(url, { headers: { 'User-Agent': 'JobAgentBot/1.0' } });
-    if (!res.ok) {
-      console.warn(`[lever] ${companyName}: HTTP ${res.status}`);
-      return [];
-    }
-    data = await res.json();
-  } catch (err) {
-    console.warn(`[lever] ${companyName}: fetch error`, err);
-    return [];
-  }
-
+  const data = await fetchJsonRetry(url, `lever ${companyName}`, { headers: { 'User-Agent': 'JobAgentBot/1.0' } });
   if (!Array.isArray(data)) return [];
 
   const results: JobListing[] = [];

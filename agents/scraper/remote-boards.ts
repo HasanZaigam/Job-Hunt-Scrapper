@@ -8,10 +8,10 @@
 // Jobs from these boards have no ATS API, so they are stored as ats_type='custom' +
 // is_manual_required=true (same as Indeed): you apply from the original posting page.
 
-import fetch from 'node-fetch';
 import { isEligibleLocation, matchesAiKeywords } from './filters';
 import { gateReason } from './quality-gate';
 import { MIN_JD_TEXT_CHARS } from './greenhouse';
+import { fetchJsonRetry } from './retry';
 
 export interface RemoteJob {
   company: string;
@@ -92,23 +92,15 @@ export function fromHimalayas(r: any): RemoteJob | null {
 
 // ------------------------------------------------------------------ fetchers
 
-async function getJson(url: string, label: string): Promise<any | null> {
-  try {
-    const res = await fetch(url, { headers: { 'User-Agent': UA, Accept: 'application/json' }, timeout: 25000 } as any);
-    if (!res.ok) {
-      console.warn(`[remote] ${label}: HTTP ${res.status}`);
-      return null;
-    }
-    return await res.json();
-  } catch (err: any) {
-    console.warn(`[remote] ${label}: ${err?.message ?? err}`);
-    return null;
-  }
+function getJson(url: string, label: string): Promise<any | null> {
+  return fetchJsonRetry(url, `remote/${label}`, { headers: { 'User-Agent': UA, Accept: 'application/json' }, timeout: 25000 } as any);
 }
 
 async function fetchRemotive(): Promise<RemoteJob[]> {
-  // Remotive asks for very few requests per day — two searches per run is plenty.
-  const queries = ['ai engineer', 'llm', 'generative ai'];
+  // Mirrors the candidate's ranked target titles (search-profile.ts) so this
+  // source surfaces the same roles the matcher actually wants, not just a
+  // generic "ai" search.
+  const queries = ['ai engineer', 'llm', 'generative ai', 'ai automation', 'applied ai'];
   const out: RemoteJob[] = [];
   for (const q of queries) {
     const data = await getJson(`https://remotive.com/api/remote-jobs?search=${encodeURIComponent(q)}&limit=100`, `remotive "${q}"`);
@@ -121,6 +113,10 @@ async function fetchRemotive(): Promise<RemoteJob[]> {
 }
 
 async function fetchRemoteOk(): Promise<RemoteJob[]> {
+  // Tried `?tags=ai` to pre-filter server-side (diagnosed 2026-10-19): fetched
+  // dropped 99→86 but title-miss stayed ~86% — RemoteOK's "ai" tag isn't
+  // reliably on AI-engineer titles (mostly data-labeling/AI-trainer gigs), and
+  // narrowing to it risks missing untagged-but-relevant postings. Not worth it.
   const data = await getJson('https://remoteok.com/api', 'remoteok');
   if (!Array.isArray(data)) return [];
   // First element is a legal/metadata notice, not a job.

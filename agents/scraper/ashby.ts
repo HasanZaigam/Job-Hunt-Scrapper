@@ -1,6 +1,6 @@
-import fetch from 'node-fetch';
 import { MIN_JD_TEXT_CHARS, type JobListing } from './greenhouse';
 import { matchesAiKeywords } from './filters';
+import { fetchJsonRetry } from './retry';
 
 /**
  * Build a location string that keeps the region. Ashby marks remote jobs with
@@ -30,21 +30,7 @@ export async function fetchAshbyJobs(
   atsId: string
 ): Promise<JobListing[]> {
   const url = `https://api.ashbyhq.com/posting-api/job-board/${atsId}`;
-
-  let data: any;
-  try {
-    const res = await fetch(url, {
-      headers: { 'User-Agent': 'JobAgentBot/1.0' },
-    });
-    if (!res.ok) {
-      console.warn(`[ashby] ${companyName}: HTTP ${res.status}`);
-      return [];
-    }
-    data = await res.json();
-  } catch (err) {
-    console.warn(`[ashby] ${companyName}: fetch error`, err);
-    return [];
-  }
+  const data = await fetchJsonRetry(url, `ashby ${companyName}`, { headers: { 'User-Agent': 'JobAgentBot/1.0' } });
 
   // Ashby's public posting-api returns { jobs: [...] }, not { jobPostings }.
   const jobs: any[] = data?.jobs ?? [];

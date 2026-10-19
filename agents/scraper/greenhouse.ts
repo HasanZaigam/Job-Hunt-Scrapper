@@ -1,5 +1,5 @@
-import fetch from 'node-fetch';
 import { matchesAiKeywords } from './filters';
+import { fetchJsonRetry } from './retry';
 
 export interface JobListing {
   company: string;
@@ -33,20 +33,7 @@ export async function fetchGreenhouseJobs(
   atsId: string
 ): Promise<JobListing[]> {
   const url = `https://boards-api.greenhouse.io/v1/boards/${atsId}/jobs?content=true`;
-
-  let data: any;
-  try {
-    const res = await fetch(url, { headers: { 'User-Agent': 'JobAgentBot/1.0' } });
-    if (!res.ok) {
-      console.warn(`[greenhouse] ${companyName}: HTTP ${res.status}`);
-      return [];
-    }
-    data = await res.json();
-  } catch (err) {
-    console.warn(`[greenhouse] ${companyName}: fetch error`, err);
-    return [];
-  }
-
+  const data = await fetchJsonRetry(url, `greenhouse ${companyName}`, { headers: { 'User-Agent': 'JobAgentBot/1.0' } });
   const jobs: any[] = data?.jobs ?? [];
   const results: JobListing[] = [];
 
