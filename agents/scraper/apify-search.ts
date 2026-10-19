@@ -13,13 +13,21 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
 const APIFY_API_TOKEN = process.env.APIFY_API_TOKEN!;
 const ACTOR_ID = 'apify~google-search-scraper';
 
+// Widening this list is free: it only adds OR-terms inside the existing 3
+// queries (one per ATS domain) — Apify bills per query page scraped, not per
+// term inside a query, so this doesn't change the cost estimate below.
+const DEFAULT_LOCATIONS = [
+  'Bengaluru', 'Bangalore', 'Chennai', 'Hyderabad', 'Gurugram', 'Gurgaon', 'Noida', 'Pune', 'India',
+  'Remote India', 'Remote - APAC', 'Remote - Worldwide', 'Anywhere',
+];
+
 function getSearchParameters() {
   try {
     const p = path.resolve(__dirname, '../resume-generator/base-resume.json');
     if (fs.existsSync(p)) {
       const data = JSON.parse(fs.readFileSync(p, 'utf-8'));
       const kws = data.target_keywords || ["AI Engineer", "GenAI", "Machine Learning", "LLM Engineer", "MLOps"];
-      const locs = data.target_locations || ["Bengaluru", "Bangalore", "Chennai", "India"];
+      const locs = data.target_locations || DEFAULT_LOCATIONS;
       return { kws, locs };
     }
   } catch (err) {
@@ -27,7 +35,7 @@ function getSearchParameters() {
   }
   return {
     kws: ["AI Engineer", "GenAI", "Machine Learning", "LLM Engineer", "MLOps"],
-    locs: ["Bengaluru", "Bangalore", "Chennai", "India"],
+    locs: DEFAULT_LOCATIONS,
   };
 }
 
@@ -74,7 +82,11 @@ async function runApifyActor(query: string): Promise<string[]> {
         }),
       }
     );
-    if (r.status === 429 || r.status >= 500) throw new RetryableHttpError(`HTTP ${r.status}`);
+    // 408 added 2026-10-19: widening the location query terms (region-lock
+    // audit) made run-sync-get-dataset-items occasionally time out on a slow
+    // Google Search Scraper run — that's transient, not a bad query, and is
+    // worth retrying the same way 429/5xx already are.
+    if (r.status === 408 || r.status === 429 || r.status >= 500) throw new RetryableHttpError(`HTTP ${r.status}`);
     return r;
   });
 

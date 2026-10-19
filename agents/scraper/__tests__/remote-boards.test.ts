@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { fromRemotive, fromRemoteOk, fromHimalayas, htmlToText } from '../remote-boards';
+import { fromRemotive, fromRemoteOk, fromHimalayas, fromJobicy, fromArbeitnow, fromHnComment, htmlToText } from '../remote-boards';
 import { isEligibleLocation } from '../filters';
 
 type Test = () => void;
@@ -7,6 +7,11 @@ const tests: Record<string, Test> = {};
 
 tests['htmlToText strips tags/entities and keeps line breaks'] = () => {
   assert.strictEqual(htmlToText('<p>Build &amp; ship</p><ul><li>RAG</li><li>LLMs</li></ul>'), 'Build & ship\nRAG\nLLMs');
+};
+
+tests['htmlToText decodes hex numeric entities (HN API uses these, not decimal)'] = () => {
+  assert.strictEqual(htmlToText('We&#x27;re hiring &#x2F; AI&#x2F;ML'), "We're hiring / AI/ML");
+  assert.strictEqual(htmlToText('&#39; and &#x27; both decode to an apostrophe'), "' and ' both decode to an apostrophe");
 };
 
 tests['Remotive: worldwide is eligible, region-locked is not'] = () => {
@@ -39,6 +44,40 @@ tests['Himalayas: empty restrictions = worldwide; country list must include Indi
   assert.strictEqual(isEligibleLocation(fromHimalayas({ ...base, locationRestrictions: ['United States', 'India'] })!.location), true);
   assert.strictEqual(fromHimalayas({ ...base, minSalary: 50000, maxSalary: 70000, currency: 'EUR' })!.salary_range, '50000-70000 EUR');
   assert.strictEqual(fromHimalayas({ title: 'x' }), null);
+};
+
+tests['Jobicy: maps fields, falls back to Worldwide when jobGeo is blank'] = () => {
+  const j = fromJobicy({ url: 'https://jobicy.com/jobs/1', jobTitle: 'LLM Engineer', companyName: 'Acme', jobGeo: 'India', jobDescription: '<p>x</p>', salaryMin: 50000, salaryMax: 70000, salaryCurrency: 'USD' })!;
+  assert.strictEqual(j.location, 'Remote - India');
+  assert.strictEqual(isEligibleLocation(j.location), true);
+  assert.strictEqual(j.salary_range, '50000-70000 USD');
+  assert.strictEqual(fromJobicy({ url: 'u', jobTitle: 't', companyName: 'c', jobGeo: '', jobDescription: 'd' })!.location, 'Remote - Worldwide');
+  assert.strictEqual(fromJobicy({ jobTitle: 'x' }), null);
+};
+
+tests['Arbeitnow: only remote:true rows map; location field is unreliable (base city, not a restriction)'] = () => {
+  assert.strictEqual(fromArbeitnow({ url: 'u', title: 't', company_name: 'c', remote: false, location: 'Berlin', description: 'd' }), null);
+  const j = fromArbeitnow({ url: 'https://arbeitnow.com/jobs/1', title: 'AI Engineer', company_name: 'Acme', remote: true, location: 'Worldwide', description: '<p>x</p>' })!;
+  assert.strictEqual(j.location, 'Remote - Worldwide');
+  assert.strictEqual(isEligibleLocation(j.location), true);
+  assert.strictEqual(fromArbeitnow({ title: 'x' }), null);
+};
+
+tests['HN: requires both "remote" and an AI/ML word, parses company/role from the first line'] = () => {
+  const aiRemote = { id: 123, text: 'Acme Corp (Remote, Worldwide) | AI Engineer | Python, LLMs<p>We build AI products.' };
+  const j = fromHnComment(999, aiRemote)!;
+  assert.strictEqual(j.company, 'Acme Corp');
+  assert.ok(j.role.includes('AI Engineer'));
+  assert.strictEqual(j.jd_url, 'https://news.ycombinator.com/item?id=123');
+  assert.strictEqual(isEligibleLocation(j.location), true);
+
+  // Remote but no AI/ML word at all -> not collected by this source.
+  assert.strictEqual(fromHnComment(999, { id: 1, text: 'Acme (Remote) | Backend Engineer | Ruby on Rails' }), null);
+  // AI/ML word but not remote -> not collected (onsite-only posts aren't this source's job).
+  assert.strictEqual(fromHnComment(999, { id: 2, text: 'Acme (SF, onsite) | AI Engineer | Python' }), null);
+  // A US-only remote AI role is correctly rejected by the shared location parser.
+  const usOnly = fromHnComment(999, { id: 3, text: 'Acme (Remote, US only) | ML Engineer | Python, PyTorch' })!;
+  assert.strictEqual(isEligibleLocation(usOnly.location), false);
 };
 
 export function run() {

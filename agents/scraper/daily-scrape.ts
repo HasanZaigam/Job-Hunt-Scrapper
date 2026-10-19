@@ -1,5 +1,6 @@
 import * as dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 import { discoverNewJobs } from './apify-search';
 import {
   supabaseClient, getExistingUrls, backlogCount, isTargetLocation,
@@ -8,6 +9,8 @@ import {
 import { gateReason } from './quality-gate';
 import { fetchRemoteJobs } from './remote-boards';
 import companyList from './company-list.json';
+
+const COMPANY_LIST_PATH = path.resolve(__dirname, './company-list.json');
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
 
@@ -51,9 +54,10 @@ async function harvest(
   budget: number,
   existingUrls: Set<string>,
   label: string
-): Promise<PendingJob[]> {
+): Promise<{ jobs: PendingJob[]; contributingBoards: Set<string> }> {
   const collected: PendingJob[] = [];
   const skipped = new Map<string, number>();
+  const contributingBoards = new Set<string>();
   // Same funnel shape as remote-boards.ts's per-source stats, so the two
   // paths (ATS boards vs free remote boards) are directly comparable.
   const stats = { fetched: 0, duplicate: 0, region: 0, gated: 0, kept: 0 };
@@ -80,6 +84,7 @@ async function harvest(
       if (why) { stats.gated++; skipped.set(why, (skipped.get(why) ?? 0) + 1); continue; }
       existingUrls.add(normUrl);
       collected.push({ ...job, _ats: b.ats });
+      contributingBoards.add(`${b.ats}:${b.atsId}`);
       stats.kept++;
     }
   }
@@ -92,7 +97,36 @@ async function harvest(
     const summary = [...skipped].map(([r, n]) => `${r}: ${n}`).join(', ');
     console.log(`[daily-scrape] ${label}: gate reasons — ${summary}`);
   }
-  return collected;
+  return { jobs: collected, contributingBoards };
+}
+
+// Apify Google discovery re-finds the same companies on every run (re-paying
+// for the same query), because discovered boards were never persisted — only
+// used for that single run. A discovered board that actually produced an
+// eligible, gate-passing job earns a permanent spot in the free curated list
+// (active: true), so future runs find it without spending Apify credit again.
+// Never auto-removes or overwrites an existing entry.
+function graduateDiscoveredCompanies(boards: Board[], contributing: Set<string>): number {
+  const existingKeys = new Set((companyList as any[]).map(c => `${c.ats}:${c.ats_id}`));
+  const toAdd = boards.filter(b => contributing.has(`${b.ats}:${b.atsId}`) && !existingKeys.has(`${b.ats}:${b.atsId}`));
+  if (toAdd.length === 0) return 0;
+
+  const current: any[] = JSON.parse(fs.readFileSync(COMPANY_LIST_PATH, 'utf-8'));
+  const today = new Date().toISOString().slice(0, 10);
+  for (const b of toAdd) {
+    current.push({
+      name: b.company,
+      ats: b.ats,
+      ats_id: b.atsId,
+      careers_url: '',
+      active: true,
+      source: 'discovered',
+      discovered_at: today,
+    });
+    console.log(`[daily-scrape] graduated discovered company into company-list.json: ${b.company} (${b.ats}:${b.atsId})`);
+  }
+  fs.writeFileSync(COMPANY_LIST_PATH, JSON.stringify(current, null, 2) + '\n');
+  return toAdd.length;
 }
 
 async function main() {
@@ -119,7 +153,9 @@ async function main() {
   console.log(`[daily-scrape] Room left ${room2} — ~${halfList} from curated list, rest from Apify.`);
 
   // 2) Curated company list (free, reliable), then 3) Apify for the remainder.
-  const fromList = room2 > 0 ? await harvest(staticBoards(), halfList, existingUrls, 'list') : [];
+  const { jobs: fromList } = room2 > 0
+    ? await harvest(staticBoards(), halfList, existingUrls, 'list')
+    : { jobs: [] as PendingJob[] };
   console.log(`[daily-scrape] Collected ${fromList.length} from curated list.`);
 
   let fromApify: PendingJob[] = [];
@@ -135,8 +171,11 @@ async function main() {
       console.warn('[daily-scrape] Apify discovery failed, continuing without it:', err);
     }
     console.log(`[daily-scrape] ${boards.length} boards discovered via Apify.`);
-    fromApify = await harvest(boards, apifyBudget, existingUrls, 'apify');
+    const result = await harvest(boards, apifyBudget, existingUrls, 'apify');
+    fromApify = result.jobs;
     console.log(`[daily-scrape] Collected ${fromApify.length} from Apify discovery.`);
+    const graduated = graduateDiscoveredCompanies(boards, result.contributingBoards);
+    if (graduated > 0) console.log(`[daily-scrape] ${graduated} new compan${graduated === 1 ? 'y' : 'ies'} added to company-list.json (active, source: discovered).`);
   }
 
   const toInsert = [...fromList, ...fromApify];

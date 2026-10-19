@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Search, SlidersHorizontal, RefreshCw } from 'lucide-react';
 import { ApplicationTable, type Application } from '../../components/ApplicationTable';
+import { locationTrack } from '../../lib/utils';
 
 const STATUS_OPTIONS = ['all', 'scraped', 'matched', 'approved', 'applied', 'interview_scheduled', 'assessment', 'rejected', 'offer'];
 // Applied + downstream live on the Dashboard, so the default "all" view hides them
@@ -19,6 +20,9 @@ function ApplicationsInner() {
   const [scoreMin, setScoreMin] = useState(0);
   const [scoreMax, setScoreMax] = useState(100);
   const [search, setSearch] = useState(initialSearch);
+  // Default OFF: India onsite/hybrid (NCR etc.) roles are hidden unless toggled on —
+  // the candidate's primary target is remote. Nothing is lost from the DB, just the view.
+  const [showIndiaLocal, setShowIndiaLocal] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -37,9 +41,10 @@ function ApplicationsInner() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const visible = statusFilter === 'all'
+  const visible = (statusFilter === 'all'
     ? applications.filter(a => !HIDDEN_WHEN_ALL.includes(a.status))
-    : applications;
+    : applications
+  ).filter(a => showIndiaLocal || locationTrack(a.location) !== 'india_local');
 
   return (
     <div className="space-y-6">
@@ -77,6 +82,11 @@ function ApplicationsInner() {
           <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Company name…"
             className="h-9 w-full rounded-lg border border-border bg-background pl-9 pr-3 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
         </div>
+        <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <input type="checkbox" checked={showIndiaLocal} onChange={e => setShowIndiaLocal(e.target.checked)}
+            className="h-3.5 w-3.5 rounded border-border accent-primary" />
+          Include India onsite/hybrid
+        </label>
       </div>
 
       {loading ? (
