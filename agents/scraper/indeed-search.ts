@@ -9,18 +9,20 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
 
 const APIFY_API_TOKEN = process.env.APIFY_API_TOKEN!;
 // misceres/indeed-scraper — returns structured jobs WITH full description text.
+// Pricing (verified live via the Apify API, 2026-10-19): PAY_PER_EVENT, $0.006
+// per job listing RETURNED by a search — billed for every listing a search
+// returns, regardless of whether it later passes our filters. There is no
+// per-search flat fee.
 const ACTOR_ID = 'misceres~indeed-scraper';
 
-// Focused AI/ML position keywords. Each is run as its own Indeed search so the
-// platform's own relevance ranking applies per keyword (mixing them into one
-// query dilutes relevance and triggers Indeed's noisy "broad match").
+// India-focused position keywords (per the candidate's explicit request). Each
+// is run as its own Indeed search so the platform's own relevance ranking
+// applies per keyword (mixing them into one query dilutes relevance).
 const POSITIONS = [
   'AI Engineer',
-  'Machine Learning Engineer',
-  'Generative AI',
   'LLM Engineer',
-  'MLOps Engineer',
-  'Data Scientist',
+  'Generative AI Engineer',
+  'AI Automation Engineer',
 ];
 
 // India hubs to target. Indeed treats a blank/region location loosely, so we
@@ -39,6 +41,30 @@ const BACKLOG_TARGET = 60;
 // Hard cap on Indeed listings collected per run, regardless of backlog room,
 // to keep Apify spend predictable.
 const MAX_PER_RUN = 15;
+
+// Hard cap on the NUMBER OF SEARCHES (location x position combos) attempted
+// per run — distinct from MAX_PER_RUN. MAX_PER_RUN only stops requesting
+// FURTHER searches once enough on-target jobs are already collected; it does
+// NOT bound cost if the on-target hit rate is low, because every search that
+// DOES run gets billed for every listing IT returns (up to MAX_PER_SEARCH),
+// even the ones we filter out afterward. This is the real cost ceiling: at
+// most 6 searches x 15 listings x $0.006 = $0.54/run, worst case.
+const MAX_SEARCHES_PER_RUN = 6;
+
+// Best-effort "last 3 days" freshness filter. The misceres actor's exact
+// response schema wasn't verified against a live call for this change (that
+// would cost real Apify credit) — this checks whatever date-like field is
+// present and fails OPEN (keeps the job) if none is found, rather than
+// silently dropping everything on an unverified assumption.
+const MAX_AGE_DAYS = 3;
+function isRecentEnough(raw: IndeedRawJob): boolean {
+  const dateStr = (raw as any).postingDateParsed ?? (raw as any).postedAt ?? (raw as any).date ?? null;
+  if (!dateStr) return true; // no date field found — don't guess, don't drop
+  const posted = new Date(dateStr);
+  if (Number.isNaN(posted.getTime())) return true;
+  const ageMs = Date.now() - posted.getTime();
+  return ageMs <= MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
+}
 
 interface IndeedRawJob {
   positionName?: string;
@@ -119,11 +145,18 @@ export async function fetchIndeedJobs(
 
   const collected: IndeedJob[] = [];
   const seen = new Set<string>();
+  let searches = 0;
+  let listingsReturned = 0;
 
   outer: for (const location of LOCATIONS) {
     for (const position of POSITIONS) {
       if (collected.length >= budget) break outer;
-      console.log(`[indeed] searching: "${position}" @ ${location}`);
+      if (searches >= MAX_SEARCHES_PER_RUN) {
+        console.log(`[indeed] hit MAX_SEARCHES_PER_RUN (${MAX_SEARCHES_PER_RUN}) — stopping to bound Apify spend.`);
+        break outer;
+      }
+      searches++;
+      console.log(`[indeed] searching: "${position}" @ ${location} (${searches}/${MAX_SEARCHES_PER_RUN})`);
       let raw: IndeedRawJob[] = [];
       try {
         raw = await runIndeedSearch(position, location);
@@ -131,9 +164,11 @@ export async function fetchIndeedJobs(
         console.warn(`[indeed] error (${position} @ ${location}):`, err);
         continue;
       }
+      listingsReturned += raw.length;
 
       for (const r of raw) {
         if (collected.length >= budget) break;
+        if (!isRecentEnough(r)) continue;
         const job = toJob(r);
         if (!job) continue;
         const normUrl = normalizeJdUrl(job.jd_url);
@@ -146,7 +181,11 @@ export async function fetchIndeedJobs(
     }
   }
 
-  console.log(`[indeed] collected ${collected.length} new on-target jobs`);
+  // listingsReturned x $0.006 is the real Apify cost for this run (billed per
+  // listing RETURNED by a search, not per listing kept) — log it so spend is
+  // visible in the workflow run log, not just inferred after the fact.
+  const estCostUsd = (listingsReturned * 0.006).toFixed(3);
+  console.log(`[indeed] ${searches} searches, ${listingsReturned} listings returned (~$${estCostUsd}), collected ${collected.length} new on-target jobs.`);
   return collected;
 }
 

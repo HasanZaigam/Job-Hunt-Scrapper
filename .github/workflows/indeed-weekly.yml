@@ -1,0 +1,61 @@
+# Weekly Indeed (India) top-up — the only direct use of Indeed data in this
+# repo, and only via the Apify misceres/indeed-scraper actor (never scraped
+# directly — see CLAUDE.md's standing rule against scraping Indeed/LinkedIn
+# with Playwright). Runs ONCE A WEEK, separate from daily-pipeline.yml,
+# because Indeed costs real Apify credit ($0.006 per listing a search
+# RETURNS, billed regardless of whether it later passes our filters).
+#
+# Cost ceiling (verified pricing via the Apify API, 2026-10-19): this run is
+# hard-capped at 6 searches x 15 listings x $0.006 = $0.54/run worst case.
+# At once/week (~4.33 runs/month) that's ~$2.34/month worst case, combined
+# with Apify Google discovery (~$0.6-0.8/month) for a total well under the
+# $5/month budget. Typical cost is lower — the run stops early once enough
+# on-target jobs are collected.
+#
+# Secrets required: same as daily-pipeline.yml (APIFY_API_TOKEN, SUPABASE_URL,
+# SUPABASE_SERVICE_KEY).
+#
+# Manual run: Actions tab -> "Indeed weekly top-up" -> Run workflow.
+
+name: Indeed weekly top-up
+
+on:
+  schedule:
+    - cron: '0 3 * * 1' # 08:30 IST Monday, after the Mon daily-pipeline run
+  workflow_dispatch:
+
+concurrency:
+  group: indeed-weekly
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Preflight — required secrets present
+        run: |
+          missing=0
+          for v in APIFY_API_TOKEN SUPABASE_URL SUPABASE_SERVICE_KEY; do
+            if [ -z "${!v}" ]; then echo "::error::Missing secret $v"; missing=1; fi
+          done
+          [ "$missing" = "0" ] || { echo "Add the missing secrets in repo Settings -> Secrets and variables -> Actions."; exit 1; }
+
+      - name: Scrape Indeed India (capped)
+        run: npx ts-node agents/scraper/indeed-search.ts
