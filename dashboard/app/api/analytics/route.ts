@@ -36,6 +36,25 @@ export async function GET() {
   }
   const sources = [...sourceMap.entries()].map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
 
+  // Per-source conversion — drop a low-yield source without re-running the
+  // pipeline to find out. Derived entirely from existing columns (no schema
+  // change): "sent" = everything we ever scraped from that source, "matched"
+  // counts every row that reached 'matched' or beyond (never downgraded).
+  const MATCHED_OR_BEYOND = new Set(['matched', 'approved', 'applied', 'interview_scheduled', 'assessment', 'offer']);
+  const conversionMap = new Map<string, { source: string; sent: number; filtered: number; dismissed: number; matched: number }>();
+  for (const r of rows) {
+    const k = (r.ats_type as string) ?? 'unknown';
+    let c = conversionMap.get(k);
+    if (!c) { c = { source: k, sent: 0, filtered: 0, dismissed: 0, matched: 0 }; conversionMap.set(k, c); }
+    c.sent++;
+    if (r.status === 'filtered') c.filtered++;
+    else if (r.status === 'dismissed') c.dismissed++;
+    if (MATCHED_OR_BEYOND.has(r.status as string)) c.matched++;
+  }
+  const sourceConversion = [...conversionMap.values()]
+    .map(c => ({ ...c, rate: c.sent ? Math.round((c.matched / c.sent) * 1000) / 10 : 0 }))
+    .sort((a, b) => b.sent - a.sent);
+
   const buckets = [0, 0, 0, 0, 0]; // 0-19, 20-39, 40-59, 60-79, 80-100
   for (const r of rows) {
     const s = r.match_score as number | null;
@@ -44,5 +63,5 @@ export async function GET() {
   }
   const histogram = ['0–19', '20–39', '40–59', '60–79', '80–100'].map((range, i) => ({ range, count: buckets[i] }));
 
-  return NextResponse.json({ funnel, sources, histogram });
+  return NextResponse.json({ funnel, sources, histogram, sourceConversion });
 }
