@@ -1,8 +1,9 @@
 import fetch from 'node-fetch';
 import * as dotenv from 'dotenv';
 import path from 'path';
-import { supabaseClient, getExistingUrls, backlogCount, isTargetLocation } from './store';
+import { supabaseClient, getExistingUrls, backlogCount, isTargetLocation, normalizeJdUrl } from './store';
 import { MIN_JD_TEXT_CHARS } from './greenhouse';
+import { classifyJobType } from './job-type';
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
 
@@ -135,11 +136,12 @@ export async function fetchIndeedJobs(
         if (collected.length >= budget) break;
         const job = toJob(r);
         if (!job) continue;
-        if (seen.has(job.jd_url) || existingUrls.has(job.jd_url)) continue;
+        const normUrl = normalizeJdUrl(job.jd_url);
+        if (seen.has(normUrl) || existingUrls.has(normUrl)) continue;
         if (!isTargetLocation(job.location)) continue;
-        seen.add(job.jd_url);
-        existingUrls.add(job.jd_url);
-        collected.push(job);
+        seen.add(normUrl);
+        existingUrls.add(normUrl);
+        collected.push({ ...job, jd_url: normUrl });
       }
     }
   }
@@ -161,13 +163,14 @@ export async function insertIndeedJobs(
   const rows = jobs.map(j => ({
     company: j.company,
     role: j.role,
-    jd_url: j.jd_url,
+    jd_url: normalizeJdUrl(j.jd_url),
     jd_text: j.jd_text,
     location: j.location,
     salary_range: j.salary_range,
     ats_type: 'custom',
     is_manual_required: true,
     status: 'scraped',
+    job_type: classifyJobType(j.role, j.jd_text, { salaryRange: j.salary_range, isManualRequired: true }),
   }));
   const { data, error } = await supabase
     .from('applications')

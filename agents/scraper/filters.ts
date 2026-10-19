@@ -54,7 +54,7 @@ export function isEligibleLocation(rawLocation: string): boolean {
 export const CORE_AI_KEYWORDS = [
   'AI', 'ML', 'Machine Learning', 'GenAI', 'LLM', 'NLP',
   'Computer Vision', 'Data Scientist', 'MLOps', 'AI Engineer',
-  'Research Scientist', 'Deep Learning', 'Generative', 'Foundation Model',
+  'Research Scientist', 'Applied Scientist', 'Deep Learning', 'Generative', 'Foundation Model',
   'Data Science',
   // Candidate's target titles that carry no "AI"/"ML" token on their own:
   'Agentic', 'Applied AI', 'AI Automation', 'Intelligent Automation', 'Prompt Engineer',
