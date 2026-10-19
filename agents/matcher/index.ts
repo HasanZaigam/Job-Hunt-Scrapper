@@ -86,7 +86,7 @@ async function main() {
   // fresh scrapes, so nothing starves when the daily Gemini budget runs out.
   const { data: jobs, error } = await supabase
     .from('applications')
-    .select('id, company, role, jd_text, location, salary_range')
+    .select('id, company, role, jd_text, location, salary_range, ats_type')
     .eq('status', 'scraped')
     .order('created_at', { ascending: true });
 
@@ -102,12 +102,23 @@ async function main() {
   let consecutiveFailures = 0;
   let persistV2 = V2_MODE !== 'off'; // turned off for the run if migration 004 is missing
   const stats = { gatedV1: 0, vetoedV2: 0, scored: 0 };
+  // Per-source funnel (ats_type) — "sent to matcher" / "matched" slice of the
+  // fetched→gate-passed→deduped→sent-to-matcher→matched pipeline.
+  const perSource = new Map<string, { sent: number; gated: number; vetoed: number; scored: number; matched: number }>();
+  const bucket = (ats: string) => {
+    let b = perSource.get(ats);
+    if (!b) { b = { sent: 0, gated: 0, vetoed: 0, scored: 0, matched: 0 }; perSource.set(ats, b); }
+    return b;
+  };
 
   for (const job of jobs) {
     if (!job.jd_text) {
       console.warn(`[matcher] Skipping ${job.id}: no JD text`);
       continue;
     }
+
+    const srcStats = bucket(job.ats_type ?? 'unknown');
+    srcStats.sent++;
 
     // Deterministic quality gate — drop senior/thin/spam before Gemini.
     const reason = gateReason(job.role, job.jd_text, { company: job.company, salaryRange: job.salary_range });
@@ -139,6 +150,7 @@ async function main() {
         .eq('id', job.id);
       console.log(`[matcher] gated ${job.company}: ${reason}`);
       stats.gatedV1++;
+      srcStats.gated++;
       continue;
     }
 
@@ -150,6 +162,7 @@ async function main() {
         .eq('id', job.id);
       console.log(`[matcher] v2-vetoed ${job.company} — ${job.role}: ${veto}`);
       stats.vetoedV2++;
+      srcStats.vetoed++;
       continue;
     }
 
@@ -185,6 +198,8 @@ async function main() {
       console.error(`[matcher] Update failed for ${job.id}:`, updateErr.message);
     } else {
       stats.scored++;
+      srcStats.scored++;
+      if (result.status === 'matched') srcStats.matched++;
       console.log(`[matcher] ${job.company} — ${job.role}: score=${result.match_score}${v2?.needs_review ? ' (v2: needs review)' : ''}`);
     }
 
@@ -193,6 +208,9 @@ async function main() {
   }
 
   console.log(`[matcher] Done. gated by rules: ${stats.gatedV1}, vetoed by v2: ${stats.vetoedV2}, scored by Gemini: ${stats.scored}.`);
+  for (const [ats, s] of perSource) {
+    console.log(`[matcher] source=${ats}: sent ${s.sent}, gated ${s.gated}, v2-vetoed ${s.vetoed}, scored ${s.scored}, matched ${s.matched}`);
+  }
 }
 
 main().catch(err => {

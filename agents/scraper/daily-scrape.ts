@@ -49,30 +49,42 @@ async function harvest(
 ): Promise<PendingJob[]> {
   const collected: PendingJob[] = [];
   const skipped = new Map<string, number>();
+  // Same funnel shape as remote-boards.ts's per-source stats, so the two
+  // paths (ATS boards vs free remote boards) are directly comparable.
+  const stats = { fetched: 0, duplicate: 0, region: 0, gated: 0, kept: 0 };
+  let boardFetchFailures = 0;
   for (const b of boards) {
     if (collected.length >= budget) break;
     let jobs;
     try {
       jobs = await fetchBoard(b.ats, b.atsId, b.company);
     } catch (err) {
+      boardFetchFailures++;
       console.warn(`[daily-scrape] ${label} ${b.company} fetch failed:`, err);
       continue;
     }
+    stats.fetched += jobs.length;
     for (const job of jobs) {
       if (collected.length >= budget) break;
-      if (existingUrls.has(job.jd_url)) continue;
-      if (!isTargetLocation(job.location)) continue;
+      if (existingUrls.has(job.jd_url)) { stats.duplicate++; continue; }
+      if (!isTargetLocation(job.location)) { stats.region++; continue; }
       // Same deterministic gate the matcher applies (senior title, >5y, thin, spam,
       // off-target) — dropping these here keeps the backlog full of jobs worth scoring.
       const why = gateReason(job.role, job.jd_text, { company: job.company, salaryRange: job.salary_range });
-      if (why) { skipped.set(why, (skipped.get(why) ?? 0) + 1); continue; }
+      if (why) { stats.gated++; skipped.set(why, (skipped.get(why) ?? 0) + 1); continue; }
       existingUrls.add(job.jd_url);
       collected.push({ ...job, _ats: b.ats });
+      stats.kept++;
     }
   }
+  console.log(
+    `[daily-scrape] ${label}: boards ${boards.length} (${boardFetchFailures} fetch-failed), ` +
+    `fetched ${stats.fetched}, duplicate ${stats.duplicate}, region-locked ${stats.region}, ` +
+    `gated ${stats.gated}, KEPT ${stats.kept}`
+  );
   if (skipped.size) {
     const summary = [...skipped].map(([r, n]) => `${r}: ${n}`).join(', ');
-    console.log(`[daily-scrape] ${label}: skipped before insert — ${summary}`);
+    console.log(`[daily-scrape] ${label}: gate reasons — ${summary}`);
   }
   return collected;
 }

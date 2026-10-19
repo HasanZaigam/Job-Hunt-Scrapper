@@ -2,6 +2,11 @@ import fetch from 'node-fetch';
 import * as dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
+import { withRetry, RetryableHttpError } from './retry';
+
+// withRetry now lives in ./retry (shared with greenhouse/lever/ashby/remote-boards).
+// Re-exported here so existing imports (scraper/__tests__/apify-retry.test.ts) keep working.
+export { withRetry } from './retry';
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
 
@@ -50,30 +55,6 @@ function parseAshbyUrl(url: string): { ats_id: string; job_url: string } | null 
   if (!m) return null;
   return { ats_id: m[1], job_url: url };
 }
-
-/** Retry a flaky call (network reset, 429, 5xx). Throws the last error after `attempts`. */
-export async function withRetry<T>(
-  fn: () => Promise<T>,
-  attempts = 3,
-  baseDelayMs = 3000,
-  sleep: (ms: number) => Promise<void> = ms => new Promise(r => setTimeout(r, ms))
-): Promise<T> {
-  let last: unknown;
-  for (let i = 1; i <= attempts; i++) {
-    try {
-      return await fn();
-    } catch (err) {
-      last = err;
-      if (i < attempts) {
-        console.warn(`[apify] attempt ${i}/${attempts} failed (${(err as Error)?.message ?? err}); retrying`);
-        await sleep(baseDelayMs * i);
-      }
-    }
-  }
-  throw last;
-}
-
-class RetryableHttpError extends Error {}
 
 async function runApifyActor(query: string): Promise<string[]> {
   // run-sync-get-dataset-items blocks until the run finishes and returns the

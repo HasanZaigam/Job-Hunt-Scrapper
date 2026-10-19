@@ -6,11 +6,13 @@ import {
   PieChart, Pie, Cell, Legend,
 } from 'recharts';
 import { Loader2 } from 'lucide-react';
+import { cn } from '../../lib/utils';
 
 interface Analytics {
   funnel: { stage: string; count: number }[];
   sources: { name: string; value: number }[];
   histogram: { range: string; count: number }[];
+  sourceConversion: { source: string; sent: number; filtered: number; dismissed: number; matched: number; rate: number }[];
 }
 
 const SOURCE_COLORS = ['#0a7ae0', '#f59e0b', '#16a34a', '#7c3aed', '#e11d48', '#0891b2'];
@@ -89,6 +91,41 @@ export default function AnalyticsPage() {
                   <Bar dataKey="count" fill="#0a7ae0" radius={[6, 6, 0, 0]} maxBarSize={48} />
                 </BarChart>
               </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Per-source conversion — which sources actually produce matches */}
+          <div className="card overflow-hidden p-0">
+            <p className="p-5 pb-0 font-display text-sm font-bold text-foreground">Per-source conversion</p>
+            <p className="px-5 pb-4 text-xs text-muted-foreground">
+              Sent = everything ever scraped from that source. Matched = reached matched or beyond. A source with a near-zero rate over a meaningful sample is a candidate to prune.
+            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/40">
+                    {['Source', 'Sent', 'Filtered', 'Dismissed', 'Matched', 'Match rate'].map(h => (
+                      <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.sourceConversion.map(c => (
+                    <tr key={c.source} className="border-b border-border/70 transition-colors last:border-0 hover:bg-muted/40">
+                      <td className="px-4 py-3 font-medium capitalize text-foreground">{c.source}</td>
+                      <td className="px-4 py-3 nums text-muted-foreground">{c.sent}</td>
+                      <td className="px-4 py-3 nums text-muted-foreground">{c.filtered}</td>
+                      <td className="px-4 py-3 nums text-muted-foreground">{c.dismissed}</td>
+                      <td className="px-4 py-3 nums text-muted-foreground">{c.matched}</td>
+                      <td className="px-4 py-3">
+                        <span className={cn('pill nums', c.rate === 0 ? 'bg-danger/10 text-danger' : c.rate < 2 ? 'bg-accent/15 text-accent' : 'bg-success/10 text-success')}>
+                          {c.rate}%
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </>

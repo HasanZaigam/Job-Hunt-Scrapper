@@ -6,7 +6,7 @@
     "scrape": "ts-node scraper/index.ts",
     "match": "ts-node matcher/index.ts",
     "email": "ts-node email-monitor/index.ts",
-    "test:scraper": "ts-node scraper/__tests__/filters.test.ts && ts-node scraper/__tests__/apify-retry.test.ts && ts-node scraper/__tests__/remote-boards.test.ts && ts-node scraper/__tests__/search-profile.test.ts && ts-node matcher/__tests__/veto-policy.test.ts",
+    "test:scraper": "ts-node scraper/__tests__/filters.test.ts && ts-node scraper/__tests__/apify-retry.test.ts && ts-node scraper/__tests__/retry.test.ts && ts-node scraper/__tests__/remote-boards.test.ts && ts-node scraper/__tests__/search-profile.test.ts && ts-node matcher/__tests__/veto-policy.test.ts",
     "telegram-digest": "ts-node telegram-bot/digest.ts",
     "linkedin": "ts-node linkedin/index.ts",
     "test:linkedin": "ts-node linkedin/__tests__/linkedin.test.ts",
