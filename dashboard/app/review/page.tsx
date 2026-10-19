@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import {
   X, SkipForward, Star, Check, ExternalLink, MapPin,
-  Wallet, Sparkles, Inbox, Loader2,
+  Wallet, Sparkles, Inbox, Loader2, Clock,
 } from 'lucide-react';
-import { cn, parseJustification } from '../../lib/utils';
+import { cn, parseJustification, locationTrack } from '../../lib/utils';
 import { MatchBadge } from '../../components/MatchBadge';
+import { PillButton } from '../../components/PillButton';
 import { emitSavedToast, emitNotifyRefresh } from '../../lib/events';
 import { DIMENSIONS, scoreColor, type ScoreBreakdown } from '../../lib/score';
 
@@ -34,16 +35,54 @@ export default function ReviewPage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Default OFF: India onsite/hybrid (NCR etc.) roles stay out of the main
+  // swipe queue unless toggled — the primary target is remote. Re-fetches the
+  // queue when flipped (simpler than threading a derived filter through the
+  // reorder/advance state below).
+  const [showIndiaLocal, setShowIndiaLocal] = useState(false);
+  // Near-miss (score 55-59): close calls that got auto-filtered below the 60
+  // cutoff — surfaced instead of silently dropped.
+  const [nearMiss, setNearMiss] = useState<ReviewJob[]>([]);
+  const [nearMissOpen, setNearMissOpen] = useState(false);
 
-  useEffect(() => {
+  const loadQueue = useCallback((includeIndiaLocal: boolean) => {
+    setLoading(true);
     fetch('/api/applications?status=matched')
       .then(r => r.json())
       .then(d => {
-        const list: ReviewJob[] = d.applications ?? [];
+        const list: ReviewJob[] = (d.applications ?? []).filter(
+          (j: ReviewJob) => includeIndiaLocal || locationTrack(j.location) !== 'india_local'
+        );
         setCards(list);
         setTotal(list.length);
       })
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { loadQueue(showIndiaLocal); }, [loadQueue, showIndiaLocal]);
+
+  useEffect(() => {
+    fetch('/api/applications?status=filtered&minScore=55&maxScore=59')
+      .then(r => r.json())
+      .then(d => setNearMiss(d.applications ?? []))
+      .catch(() => {});
+  }, []);
+
+  const restoreNearMiss = useCallback(async (id: string) => {
+    setNearMiss(prev => prev.filter(j => j.id !== id));
+    await fetch(`/api/applications/${id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'matched' }),
+    });
+    loadQueue(showIndiaLocal);
+  }, [loadQueue, showIndiaLocal]);
+
+  const dismissNearMiss = useCallback(async (id: string) => {
+    setNearMiss(prev => prev.filter(j => j.id !== id));
+    await fetch(`/api/applications/${id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'dismissed' }),
+    });
   }, []);
 
   const current = cards[0];
@@ -157,10 +196,41 @@ export default function ReviewPage() {
           <h1 className="font-display text-2xl font-bold text-foreground">Review</h1>
           <p className="text-sm text-muted-foreground">Clear the matched backlog, one job at a time.</p>
         </div>
-        {!loading && total > 0 && (
-          <span className="pill bg-muted text-muted-foreground nums">{cards.length} in queue</span>
-        )}
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <input type="checkbox" checked={showIndiaLocal} onChange={e => setShowIndiaLocal(e.target.checked)}
+              className="h-3.5 w-3.5 rounded border-border accent-primary" />
+            Include India onsite/hybrid
+          </label>
+          {!loading && total > 0 && (
+            <span className="pill bg-muted text-muted-foreground nums">{cards.length} in queue</span>
+          )}
+        </div>
       </div>
+
+      {/* Near miss — scored 55-59, auto-filtered just under the 60 cutoff. Surfaced, not silently dropped. */}
+      {nearMiss.length > 0 && (
+        <details className="card overflow-hidden" open={nearMissOpen} onToggle={e => setNearMissOpen((e.target as HTMLDetailsElement).open)}>
+          <summary className="flex cursor-pointer list-none items-center gap-2 p-4 text-sm font-medium text-foreground">
+            <Clock className="h-4 w-4 text-accent" /> Near miss — scored 55&ndash;59
+            <span className="pill bg-accent/15 text-accent">{nearMiss.length}</span>
+            <span className="ml-auto text-xs text-muted-foreground">just under the cutoff</span>
+          </summary>
+          <div className="divide-y divide-border/60 border-t border-border">
+            {nearMiss.map(j => (
+              <div key={j.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
+                <div className="min-w-[180px] flex-1">
+                  <a href={j.jd_url} target="_blank" rel="noopener noreferrer" className="font-medium text-foreground hover:text-primary">{j.company}</a>
+                  <p className="truncate text-xs text-muted-foreground">{j.role}</p>
+                </div>
+                <MatchBadge score={j.match_score} />
+                <PillButton tone="primary" onClick={() => restoreNearMiss(j.id)}>Move to Review</PillButton>
+                <PillButton tone="danger" onClick={() => dismissNearMiss(j.id)}>Remove</PillButton>
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
 
       {/* progress */}
       {!loading && total > 0 && (

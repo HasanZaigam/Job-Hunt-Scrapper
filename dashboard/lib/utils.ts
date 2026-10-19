@@ -36,3 +36,20 @@ export function parseJustification(raw: string | null | undefined): string[] {
 
   return lines.length > 0 ? lines : [text];
 }
+
+export type LocationTrack = 'global_remote' | 'india_local';
+
+/**
+ * Every row in the DB already passed scrape-time eligibility (remote open to
+ * India/worldwide, or onsite/hybrid India — nationwide, not a city
+ * whitelist), so there's no new "eligible or not" decision to make here. This
+ * only splits the already-eligible set into two VIEWS: jobs you can do from
+ * anywhere ("global_remote") vs jobs that require being physically in India
+ * ("india_local" — onsite or hybrid). No new DB column; derived from the
+ * existing free-text `location` string.
+ */
+export function locationTrack(location: string | null | undefined): LocationTrack {
+  const l = (location || '').toLowerCase();
+  const isHybridOrOnsite = /\bhybrid\b/.test(l) || (!/\bremote\b/.test(l) && !/\b(worldwide|global|anywhere)\b/.test(l));
+  return isHybridOrOnsite ? 'india_local' : 'global_remote';
+}
