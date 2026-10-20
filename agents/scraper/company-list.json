@@ -419,5 +419,14 @@
     "active": true,
     "source": "discovered",
     "discovered_at": "2026-10-19"
+  },
+  {
+    "name": "Gofasti",
+    "ats": "greenhouse",
+    "ats_id": "gofasti",
+    "careers_url": "",
+    "active": true,
+    "source": "discovered",
+    "discovered_at": "2026-10-20"
   }
 ]
