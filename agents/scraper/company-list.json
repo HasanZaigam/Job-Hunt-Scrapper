@@ -428,5 +428,23 @@
     "active": true,
     "source": "discovered",
     "discovered_at": "2026-10-20"
+  },
+  {
+    "name": "Mactores",
+    "ats": "lever",
+    "ats_id": "mactores",
+    "careers_url": "",
+    "active": true,
+    "source": "discovered",
+    "discovered_at": "2026-10-22"
+  },
+  {
+    "name": "Trust Wallet",
+    "ats": "ashby",
+    "ats_id": "trust-wallet",
+    "careers_url": "",
+    "active": true,
+    "source": "discovered",
+    "discovered_at": "2026-10-22"
   }
 ]
