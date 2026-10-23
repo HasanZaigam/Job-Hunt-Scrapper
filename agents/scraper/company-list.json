@@ -446,5 +446,14 @@
     "active": true,
     "source": "discovered",
     "discovered_at": "2026-10-22"
+  },
+  {
+    "name": "Meraki Labs",
+    "ats": "ashby",
+    "ats_id": "Meraki-Labs",
+    "careers_url": "",
+    "active": true,
+    "source": "discovered",
+    "discovered_at": "2026-10-23"
   }
 ]
