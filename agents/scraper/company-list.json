@@ -455,5 +455,32 @@
     "active": true,
     "source": "discovered",
     "discovered_at": "2026-10-23"
+  },
+  {
+    "name": "AIFund",
+    "ats": "lever",
+    "ats_id": "AIFund",
+    "careers_url": "",
+    "active": true,
+    "source": "discovered",
+    "discovered_at": "2026-10-26"
+  },
+  {
+    "name": "Composio",
+    "ats": "ashby",
+    "ats_id": "composio",
+    "careers_url": "",
+    "active": true,
+    "source": "discovered",
+    "discovered_at": "2026-10-26"
+  },
+  {
+    "name": "Certa",
+    "ats": "ashby",
+    "ats_id": "certa",
+    "careers_url": "",
+    "active": true,
+    "source": "discovered",
+    "discovered_at": "2026-10-26"
   }
 ]
