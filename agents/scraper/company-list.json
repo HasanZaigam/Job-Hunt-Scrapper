@@ -482,5 +482,14 @@
     "active": true,
     "source": "discovered",
     "discovered_at": "2026-10-26"
+  },
+  {
+    "name": "Nextgenfed",
+    "ats": "lever",
+    "ats_id": "nextgenfed",
+    "careers_url": "",
+    "active": true,
+    "source": "discovered",
+    "discovered_at": "2026-11-02"
   }
 ]
