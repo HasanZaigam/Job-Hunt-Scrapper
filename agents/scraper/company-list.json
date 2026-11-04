@@ -491,5 +491,14 @@
     "active": true,
     "source": "discovered",
     "discovered_at": "2026-11-02"
+  },
+  {
+    "name": "Bjakcareer",
+    "ats": "ashby",
+    "ats_id": "bjakcareer",
+    "careers_url": "",
+    "active": true,
+    "source": "discovered",
+    "discovered_at": "2026-11-04"
   }
 ]
