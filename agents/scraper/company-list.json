@@ -500,5 +500,23 @@
     "active": true,
     "source": "discovered",
     "discovered_at": "2026-11-04"
+  },
+  {
+    "name": "Avathon",
+    "ats": "greenhouse",
+    "ats_id": "avathon",
+    "careers_url": "",
+    "active": true,
+    "source": "discovered",
+    "discovered_at": "2026-11-09"
+  },
+  {
+    "name": "Mastra",
+    "ats": "ashby",
+    "ats_id": "mastra",
+    "careers_url": "",
+    "active": true,
+    "source": "discovered",
+    "discovered_at": "2026-11-09"
   }
 ]
