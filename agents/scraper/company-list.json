@@ -518,5 +518,32 @@
     "active": true,
     "source": "discovered",
     "discovered_at": "2026-11-09"
+  },
+  {
+    "name": "Eqtcorporation",
+    "ats": "greenhouse",
+    "ats_id": "eqtcorporation",
+    "careers_url": "",
+    "active": true,
+    "source": "discovered",
+    "discovered_at": "2026-11-11"
+  },
+  {
+    "name": "Lingarogroup",
+    "ats": "lever",
+    "ats_id": "lingarogroup",
+    "careers_url": "",
+    "active": true,
+    "source": "discovered",
+    "discovered_at": "2026-11-11"
+  },
+  {
+    "name": "G2",
+    "ats": "ashby",
+    "ats_id": "g2",
+    "careers_url": "",
+    "active": true,
+    "source": "discovered",
+    "discovered_at": "2026-11-11"
   }
 ]
