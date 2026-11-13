@@ -545,5 +545,14 @@
     "active": true,
     "source": "discovered",
     "discovered_at": "2026-11-11"
+  },
+  {
+    "name": "Coupa",
+    "ats": "lever",
+    "ats_id": "coupa",
+    "careers_url": "",
+    "active": true,
+    "source": "discovered",
+    "discovered_at": "2026-11-13"
   }
 ]
